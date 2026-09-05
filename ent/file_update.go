@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/cloudreve/Cloudreve/v4/ent/directlink"
 	"github.com/cloudreve/Cloudreve/v4/ent/entity"
+	"github.com/cloudreve/Cloudreve/v4/ent/event"
 	"github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/ent/metadata"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
@@ -330,6 +331,21 @@ func (fu *FileUpdate) AddDirectLinks(d ...*DirectLink) *FileUpdate {
 	return fu.AddDirectLinkIDs(ids...)
 }
 
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
+func (fu *FileUpdate) AddEventIDs(ids ...int) *FileUpdate {
+	fu.mutation.AddEventIDs(ids...)
+	return fu
+}
+
+// AddEvents adds the "events" edges to the Event entity.
+func (fu *FileUpdate) AddEvents(e ...*Event) *FileUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return fu.AddEventIDs(ids...)
+}
+
 // Mutation returns the FileMutation object of the builder.
 func (fu *FileUpdate) Mutation() *FileMutation {
 	return fu.mutation
@@ -456,6 +472,27 @@ func (fu *FileUpdate) RemoveDirectLinks(d ...*DirectLink) *FileUpdate {
 		ids[i] = d[i].ID
 	}
 	return fu.RemoveDirectLinkIDs(ids...)
+}
+
+// ClearEvents clears all "events" edges to the Event entity.
+func (fu *FileUpdate) ClearEvents() *FileUpdate {
+	fu.mutation.ClearEvents()
+	return fu
+}
+
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
+func (fu *FileUpdate) RemoveEventIDs(ids ...int) *FileUpdate {
+	fu.mutation.RemoveEventIDs(ids...)
+	return fu
+}
+
+// RemoveEvents removes "events" edges to Event entities.
+func (fu *FileUpdate) RemoveEvents(e ...*Event) *FileUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return fu.RemoveEventIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -853,6 +890,51 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if fu.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.EventsTable,
+			Columns: []string{file.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fu.mutation.RemovedEventsIDs(); len(nodes) > 0 && !fu.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.EventsTable,
+			Columns: []string{file.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fu.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.EventsTable,
+			Columns: []string{file.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, fu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{file.Label}
@@ -1168,6 +1250,21 @@ func (fuo *FileUpdateOne) AddDirectLinks(d ...*DirectLink) *FileUpdateOne {
 	return fuo.AddDirectLinkIDs(ids...)
 }
 
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
+func (fuo *FileUpdateOne) AddEventIDs(ids ...int) *FileUpdateOne {
+	fuo.mutation.AddEventIDs(ids...)
+	return fuo
+}
+
+// AddEvents adds the "events" edges to the Event entity.
+func (fuo *FileUpdateOne) AddEvents(e ...*Event) *FileUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return fuo.AddEventIDs(ids...)
+}
+
 // Mutation returns the FileMutation object of the builder.
 func (fuo *FileUpdateOne) Mutation() *FileMutation {
 	return fuo.mutation
@@ -1294,6 +1391,27 @@ func (fuo *FileUpdateOne) RemoveDirectLinks(d ...*DirectLink) *FileUpdateOne {
 		ids[i] = d[i].ID
 	}
 	return fuo.RemoveDirectLinkIDs(ids...)
+}
+
+// ClearEvents clears all "events" edges to the Event entity.
+func (fuo *FileUpdateOne) ClearEvents() *FileUpdateOne {
+	fuo.mutation.ClearEvents()
+	return fuo
+}
+
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
+func (fuo *FileUpdateOne) RemoveEventIDs(ids ...int) *FileUpdateOne {
+	fuo.mutation.RemoveEventIDs(ids...)
+	return fuo
+}
+
+// RemoveEvents removes "events" edges to Event entities.
+func (fuo *FileUpdateOne) RemoveEvents(e ...*Event) *FileUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return fuo.RemoveEventIDs(ids...)
 }
 
 // Where appends a list predicates to the FileUpdate builder.
@@ -1714,6 +1832,51 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (_node *File, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(directlink.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if fuo.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.EventsTable,
+			Columns: []string{file.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fuo.mutation.RemovedEventsIDs(); len(nodes) > 0 && !fuo.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.EventsTable,
+			Columns: []string{file.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fuo.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.EventsTable,
+			Columns: []string{file.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

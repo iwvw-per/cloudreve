@@ -34,9 +34,14 @@ func (service *UserRegisterService) Register(c *gin.Context) serializer.Response
 	dep := dependency.FromContext(c)
 	settings := dep.SettingProvider()
 
+	email := strings.ToLower(service.UserName)
+	if err := filterEmailDomain(c, dep, email); err != nil {
+		return serializer.ErrWithDetails(c, serializer.CodeEmailProviderBaned, "Email provider is not allowed", err)
+	}
+
 	isEmailRequired := settings.EmailActivationEnabled(c)
 	args := &inventory.NewUserArgs{
-		Email:         strings.ToLower(service.UserName),
+		Email:         email,
 		PlainPassword: service.Password,
 		Status:        user.StatusActive,
 		GroupID:       settings.DefaultGroup(c),
@@ -115,6 +120,53 @@ func sendActivationEmail(ctx context.Context, dep dependency.Dep, newUser *ent.U
 
 	if err := dep.EmailClient(ctx).Send(ctx, newUser.Email, title, body); err != nil {
 		return serializer.NewError(serializer.CodeFailedSendEmail, "Failed to send activation email", err)
+	}
+
+	return nil
+}
+
+const (
+	filterEmailProviderDisabled  = "0"
+	filterEmailProviderWhitelist = "1"
+	filterEmailProviderBlacklist = "2"
+)
+
+// filterEmailDomain 在创建用户前检查邮箱域名是否被允许。
+// filter_email_provider 取值 0 空/未知=disabled, 1=whitelist, 2=blacklist；
+// 0 或读取异常时不拦截。
+func filterEmailDomain(ctx context.Context, dep dependency.Dep, email string) error {
+	vals, err := dep.SettingClient().Gets(ctx, []string{
+		"filter_email_provider",
+		"filter_email_provider_rules",
+	})
+	if err != nil {
+		return err
+	}
+
+	provider := strings.TrimSpace(vals["filter_email_provider"])
+	if provider == "" {
+		provider = filterEmailProviderDisabled
+	}
+	if provider != filterEmailProviderWhitelist && provider != filterEmailProviderBlacklist {
+		return nil
+	}
+
+	domain := email
+	if idx := strings.LastIndex(domain, "@"); idx >= 0 {
+		domain = domain[idx+1:]
+	}
+
+	blocked := false
+	for _, rule := range strings.Split(vals["filter_email_provider_rules"], ",") {
+		if rule = strings.ToLower(strings.TrimSpace(rule)); rule != "" && rule == domain {
+			blocked = true
+			break
+		}
+	}
+
+	if (provider == filterEmailProviderWhitelist && !blocked) ||
+		(provider == filterEmailProviderBlacklist && blocked) {
+		return serializer.NewError(serializer.CodeEmailProviderBaned, "Email provider is not allowed", nil)
 	}
 
 	return nil

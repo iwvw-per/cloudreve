@@ -8,12 +8,14 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/ent"
 	"github.com/cloudreve/Cloudreve/v4/ent/user"
 	"github.com/cloudreve/Cloudreve/v4/inventory"
+	"github.com/cloudreve/Cloudreve/v4/inventory/types"
 	"github.com/cloudreve/Cloudreve/v4/pkg/auth"
 	"github.com/cloudreve/Cloudreve/v4/pkg/cluster/routes"
 	"github.com/cloudreve/Cloudreve/v4/pkg/email"
 	"github.com/cloudreve/Cloudreve/v4/pkg/hashid"
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
 	"github.com/cloudreve/Cloudreve/v4/pkg/util"
+	"github.com/cloudreve/Cloudreve/v4/service/admin"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 	"github.com/pquerna/otp/totp"
@@ -140,6 +142,13 @@ func (service *UserLoginService) Login(c *gin.Context) (*ent.User, string, error
 	}
 
 	if err != nil {
+		admin.RecordEvent(c, &inventory.CreateEventParams{
+			Type: types.AuditTypeUserLoginFailed,
+			Content: &types.AuditContent{
+				Failed: true,
+				Error:  err.Error(),
+			},
+		})
 		return nil, "", err
 	}
 
@@ -166,6 +175,11 @@ func IssueToken(c *gin.Context) (*BuiltinLoginResponse, error) {
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeEncryptError, "Failed to issue token pair", err)
 	}
+
+	admin.RecordEvent(c, &inventory.CreateEventParams{
+		Type:   types.AuditTypeUserLogin,
+		UserID: u.ID,
+	})
 
 	return &BuiltinLoginResponse{
 		User:  BuildUser(u, dep.HashIDEncoder()),

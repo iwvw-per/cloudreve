@@ -365,6 +365,9 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 					controllers.UserIssueToken,
 				)
 			}
+
+			// 第三方 SSO 登录 (Logto / OIDC / QQ)
+			RegisterSSORoutes(session)
 		}
 
 		// 用户相关路由
@@ -864,6 +867,9 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 			//)
 		}
 
+		// PRO 版公开扩展路由（如用户侧举报入口），由各功能在 routers/pro_*.go 中注册
+		registerProPublicRoutes(v4, dep)
+
 		// 需要登录保护的
 		auth := v4.Group("")
 		auth.Use(middleware.LoginRequired())
@@ -1235,6 +1241,9 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 						controllers.AdminBatchDeleteShare,
 					)
 				}
+
+				// PRO 版扩展路由（各功能在 routers/pro_*.go 中独立注册，避免并发冲突）
+				registerProAdminRoutes(admin, dep)
 			}
 
 			// 用户

@@ -13,6 +13,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/manager"
 	"github.com/cloudreve/Cloudreve/v4/pkg/hashid"
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
+	"github.com/cloudreve/Cloudreve/v4/service/admin"
 	"github.com/cloudreve/Cloudreve/v4/service/explorer"
 	"github.com/gin-gonic/gin"
 )
@@ -27,6 +28,13 @@ type (
 		Expire          int    `json:"expire"`
 		ShareView       bool   `json:"share_view"`
 		ShowReadMe      bool   `json:"show_readme"`
+
+		// 分享写协作与定价（PRO）
+		Price                int  `json:"price"`
+		AllowUpload          bool `json:"allow_upload"`
+		AllowModify          bool `json:"allow_modify"`
+		AllowDelete          bool `json:"allow_delete"`
+		AllowAnonymousUpload bool `json:"allow_anonymous_upload"`
 	}
 	ShareCreateParamCtx struct{}
 
@@ -95,8 +103,35 @@ func (service *ShareCreateService) Upsert(c *gin.Context, existed int) (string, 
 		return "", err
 	}
 
+	// 持久化分享写协作与定价设置（ShareProps 为 JSON，直接整体写回）
+	props := &types.ShareProps{
+		ShareView:            service.ShareView,
+		ShowReadMe:           service.ShowReadMe,
+		Price:                service.Price,
+		AllowUpload:          service.AllowUpload,
+		AllowModify:          service.AllowModify,
+		AllowDelete:          service.AllowDelete,
+		AllowAnonymousUpload: service.AllowAnonymousUpload,
+	}
+	if _, err := dep.ShareClient().Upsert(c, &inventory.CreateShareParams{
+		Existed: share,
+		Props:   props,
+	}); err != nil {
+		return "", serializer.NewError(serializer.CodeDBError, "Failed to save share settings", err)
+	}
+
 	base := dep.SettingProvider().SiteURL(c)
-	return explorer.BuildShareLink(share, dep.HashIDEncoder(), base, true), nil
+	shareLink := explorer.BuildShareLink(share, dep.HashIDEncoder(), base, true)
+
+	if existed == 0 {
+		admin.RecordEvent(c, &inventory.CreateEventParams{
+			Type:    types.AuditTypeShare,
+			UserID:  user.ID,
+			ShareID: share.ID,
+		})
+	}
+
+	return shareLink, nil
 }
 
 func DeleteShare(c *gin.Context, shareId int) error {
@@ -121,6 +156,12 @@ func DeleteShare(c *gin.Context, shareId int) error {
 	if err := shareClient.Delete(c, share.ID); err != nil {
 		return serializer.NewError(serializer.CodeDBError, "Failed to delete share", err)
 	}
+
+	admin.RecordEvent(c, &inventory.CreateEventParams{
+		Type:    types.AuditTypeDeleteShare,
+		UserID:  user.ID,
+		ShareID: share.ID,
+	})
 
 	return nil
 }

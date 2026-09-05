@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/rand"
 	"path"
 	"time"
 
@@ -45,6 +46,12 @@ func (f *DBFS) PreValidateUpload(ctx context.Context, dst *fs.URI, files ...fs.P
 
 	// Get parent folder storage policy and performs validation
 	policy, err := f.getPreferredPolicy(ctx, dstFile)
+	if err != nil {
+		return err
+	}
+
+	// Resolve load_balance policy to a concrete child policy selected by weight.
+	policy, err = f.resolveLoadBalancePolicy(ctx, policy)
 	if err != nil {
 		return err
 	}
@@ -125,11 +132,17 @@ func (f *DBFS) PrepareUpload(ctx context.Context, req *fs.UploadRequest, opts ..
 	var (
 		policy *ent.StoragePolicy
 	)
-	if req.ImportFrom == nil {
+	if req.Props.PreferredStoragePolicy == 0 {
 		policy, err = f.getPreferredPolicy(ctx, ancestor)
 	} else {
 		policy, err = f.storagePolicyClient.GetPolicyByID(ctx, req.Props.PreferredStoragePolicy)
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Resolve load_balance policy to a concrete child policy selected by weight.
+	policy, err = f.resolveLoadBalancePolicy(ctx, policy)
 	if err != nil {
 		return nil, err
 	}
@@ -380,6 +393,40 @@ func (f *DBFS) CompleteUpload(ctx context.Context, session *fs.UploadSession) (f
 	}
 
 	return file, nil
+}
+
+// resolveLoadBalancePolicy resolves a load_balance storage policy to a concrete
+// child storage policy selected by the configured weights. Non load_balance
+// policies are returned unchanged. Nested load_balance children are resolved
+// recursively up to fs.MaxLoadBalanceDepth to guard against loops.
+func (f *DBFS) resolveLoadBalancePolicy(ctx context.Context, policy *ent.StoragePolicy) (*ent.StoragePolicy, error) {
+	current := policy
+	for depth := 0; depth < fs.MaxLoadBalanceDepth; depth++ {
+		if current == nil || current.Type != types.PolicyTypeLoadBalance {
+			return current, nil
+		}
+
+		weights := map[int]int{}
+		if current.Settings != nil && current.Settings.LoadBalancer != nil {
+			weights = current.Settings.LoadBalancer.Weights
+		}
+		if len(weights) == 0 {
+			return nil, serializer.NewError(serializer.CodeInternalSetting, "Load balance policy has no child policies", nil)
+		}
+
+		childID := fs.ResolveLoadBalancePolicy(weights, func() int {
+			return rand.Int()
+		})
+
+		sc, _ := inventory.InheritTx(ctx, f.storagePolicyClient)
+		child, err := sc.GetPolicyByID(ctx, childID)
+		if err != nil {
+			return nil, serializer.NewError(serializer.CodePolicyNotExist, "Load balance child policy does not exist", err)
+		}
+		current = child
+	}
+
+	return nil, serializer.NewError(serializer.CodeInternalSetting, "Load balance policy nesting exceeds depth limit", nil)
 }
 
 // This function will be used:

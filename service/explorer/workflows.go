@@ -74,6 +74,7 @@ type (
 		Src     []string `json:"src"`
 		SrcFile string   `json:"src_file"`
 		Dst     string   `json:"dst" binding:"required"`
+		NodeID  int      `json:"node_id"`
 	}
 	CreateDownloadParamCtx struct{}
 )
@@ -132,12 +133,18 @@ func (service *DownloadWorkflowService) CreateDownloadTask(c *gin.Context) ([]*T
 	// batch creating tasks
 	ae := serializer.NewAggregateError()
 	tasks := make([]queue.Task, 0, len(service.Src))
+
+	nodeID, err := workflows.ResolveTaskNodeID(c, dep, user.Edges.Group, service.NodeID)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, src := range service.Src {
 		if src == "" {
 			continue
 		}
 
-		t, err := workflows.NewRemoteDownloadTask(c, src, service.SrcFile, service.Dst)
+		t, err := workflows.NewRemoteDownloadTask(c, src, service.SrcFile, service.Dst, nodeID)
 		if err != nil {
 			ae.Add(src, err)
 			continue
@@ -151,7 +158,7 @@ func (service *DownloadWorkflowService) CreateDownloadTask(c *gin.Context) ([]*T
 	}
 
 	if service.SrcFile != "" {
-		t, err := workflows.NewRemoteDownloadTask(c, "", service.SrcFile, service.Dst)
+		t, err := workflows.NewRemoteDownloadTask(c, "", service.SrcFile, service.Dst, nodeID)
 		if err != nil {
 			ae.Add(service.SrcFile, err)
 		}
@@ -175,6 +182,7 @@ type (
 		Encoding string   `json:"encoding"`
 		Password string   `json:"password"`
 		FileMask []string `json:"file_mask"`
+		NodeID   int      `json:"node_id"`
 	}
 	CreateArchiveParamCtx struct{}
 )
@@ -204,8 +212,13 @@ func (service *ArchiveWorkflowService) CreateExtractTask(c *gin.Context) (*TaskR
 		return nil, serializer.NewError(serializer.CodeParamErr, "Invalid destination", err)
 	}
 
+	nodeID, err := workflows.ResolveTaskNodeID(c, dep, user.Edges.Group, service.NodeID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create task
-	t, err := workflows.NewExtractArchiveTask(c, service.Src[0], service.Dst, service.Encoding, service.Password, service.FileMask)
+	t, err := workflows.NewExtractArchiveTask(c, service.Src[0], service.Dst, service.Encoding, service.Password, service.FileMask, nodeID)
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeCreateTaskError, "Failed to create task", err)
 	}
@@ -248,8 +261,13 @@ func (service *ArchiveWorkflowService) CreateCompressTask(c *gin.Context) (*Task
 	}
 	m.OnUploadFailed(c, session)
 
+	nodeID, err := workflows.ResolveTaskNodeID(c, dep, user.Edges.Group, service.NodeID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create task
-	t, err := workflows.NewCreateArchiveTask(c, service.Src, service.Dst)
+	t, err := workflows.NewCreateArchiveTask(c, service.Src, service.Dst, nodeID)
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeCreateTaskError, "Failed to create task", err)
 	}
@@ -457,6 +475,68 @@ type (
 	}
 	CreateRebuildFTSIndexParamCtx struct{}
 )
+
+type (
+	RelocateWorkflowService struct {
+		SrcURI         string `json:"src_uri" binding:"required,min=1,max=65535"`
+		TargetPolicyID int    `json:"target_policy_id" binding:"required"`
+		Recursive      bool   `json:"recursive"`
+	}
+	CreateRelocateParamCtx struct{}
+)
+
+func (service *RelocateWorkflowService) CreateRelocateTask(c *gin.Context) (*TaskResponse, error) {
+	dep := dependency.FromContext(c)
+	user := inventory.UserFromContext(c)
+	hasher := dep.HashIDEncoder()
+
+	src, err := fs.NewUriFromString(service.SrcURI)
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeParamErr, "Invalid source uri", err)
+	}
+
+	// Validate source path is accessible by current user
+	m := manager.NewFileManager(dep, user)
+	defer m.Recycle()
+	srcFile, err := m.Get(c, src, dbfs.WithFileEntities())
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeParamErr, "Invalid source path", err)
+	}
+	if srcFile.OwnerID() != user.ID && !user.Edges.Group.Permissions.Enabled(int(types.GroupPermissionIsAdmin)) {
+		return nil, serializer.NewError(serializer.CodeNoPermissionErr, "Source path not owned by current user", nil)
+	}
+
+	// Validate target storage policy
+	if service.TargetPolicyID == 0 {
+		return nil, serializer.NewError(serializer.CodeParamErr, "Target storage policy is required", nil)
+	}
+	targetPolicy, err := dep.StoragePolicyClient().GetPolicyByID(c, service.TargetPolicyID)
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeParamErr, "Target storage policy not found", err)
+	}
+	if targetPolicy.Type == types.PolicyTypeLoadBalance {
+		return nil, serializer.NewError(serializer.CodeParamErr, "Load balance policy cannot be used as relocation target", nil)
+	}
+
+	// Source and target must be different
+	if srcFile.Type() == types.FileTypeFile {
+		if p := srcFile.PrimaryEntity(); p != nil && p.ID() != 0 && p.PolicyID() == service.TargetPolicyID {
+			return nil, serializer.NewError(serializer.CodeParamErr, "Source file is already on target storage policy", nil)
+		}
+	}
+
+	// Create task
+	t, err := workflows.NewRelocateTask(c, service.SrcURI, service.TargetPolicyID, service.Recursive)
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeCreateTaskError, "Failed to create task", err)
+	}
+
+	if err := dep.IoIntenseQueue(c).QueueTask(c, t); err != nil {
+		return nil, serializer.NewError(serializer.CodeCreateTaskError, "Failed to queue task", err)
+	}
+
+	return BuildTaskResponse(t, nil, hasher), nil
+}
 
 func (service *RebuildFTSIndexWorkflowService) CreateRebuildFTSIndexTask(c *gin.Context) (*TaskResponse, error) {
 	dep := dependency.FromContext(c)

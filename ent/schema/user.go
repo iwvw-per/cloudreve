@@ -36,6 +36,9 @@ func (User) Fields() []ent.Field {
 			Default(&types.UserSetting{}).
 			Optional(),
 		field.Int("group_users"),
+		field.Int("credit").
+			Default(0).
+			Comment("User credit points balance"),
 	}
 }
 
@@ -54,6 +57,11 @@ func (User) Edges() []ent.Edge {
 		edge.To("fsevents", FsEvent.Type),
 		edge.To("entities", Entity.Type),
 		edge.To("oauth_grants", OAuthGrant.Type),
+		edge.To("events", Event.Type),
+		edge.To("orders", Order.Type),
+		edge.To("gift_codes", GiftCode.Type),
+		edge.To("abuse_reports_made", AbuseReport.Type),
+		edge.To("abuse_reports_received", AbuseReport.Type),
 	}
 }
 

@@ -13,8 +13,10 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/manager"
 	"github.com/cloudreve/Cloudreve/v4/pkg/hashid"
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
+	"github.com/cloudreve/Cloudreve/v4/service/admin"
 	"github.com/cloudreve/Cloudreve/v4/service/explorer"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 )
 
 type (
@@ -147,6 +149,12 @@ func (s *ListShareService) List(c *gin.Context) (*ListShareResponse, error) {
 		return nil, serializer.NewError(serializer.CodeDBError, "Failed to list shares", err)
 	}
 
+	// 合并用户所属组的默认固定分享（置于列表最前、去重）
+	res.Shares, err = explorer.MergeDefaultSharesToPinned(c, user, res.Shares)
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeDBError, "Failed to merge default shares", err)
+	}
+
 	base := dep.SettingProvider().SiteURL(ctx)
 	return BuildListShareResponse(ctx, res, hasher, base, user, true), nil
 }
@@ -189,4 +197,86 @@ func (s *ListShareService) ListInUserProfile(c *gin.Context, uid int) (*ListShar
 
 	base := dep.SettingProvider().SiteURL(ctx)
 	return BuildListShareResponse(ctx, res, hasher, base, user, false), nil
+}
+
+type (
+	// BuyShareService 用积分购买付费分享的访问权。
+	BuyShareService struct {
+		ShareID int
+	}
+	BuyShareParamCtx struct{}
+	// BuyShareResponse 购买结果。
+	BuyShareResponse struct {
+		Purchased bool `json:"purchased"`
+		Price     int  `json:"price"`
+		Credit    int  `json:"credit"`
+	}
+)
+
+// Buy 校验访问者积分并扣减，记录购买者并写审计日志。
+func (s *BuyShareService) Buy(c *gin.Context) (*BuyShareResponse, error) {
+	dep := dependency.FromContext(c)
+	user := inventory.UserFromContext(c)
+	if user == nil || inventory.IsAnonymousUser(user) {
+		return nil, serializer.NewError(serializer.CodeCheckLogin, "Login required", nil)
+	}
+
+	ctx := context.WithValue(c, inventory.LoadShareUser{}, true)
+	ctx = context.WithValue(ctx, inventory.LoadShareFile{}, true)
+	ctx = context.WithValue(ctx, inventory.LoadUserGroup{}, true)
+	share, err := dep.ShareClient().GetByID(ctx, s.ShareID)
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeNotFound, "share not found", err)
+	}
+	if err := inventory.IsValidShare(share); err != nil {
+		return nil, serializer.NewError(serializer.CodeNotFound, "share link expired", err)
+	}
+	if share.Edges.User == nil {
+		return nil, serializer.NewError(serializer.CodeNotFound, "share owner not found", nil)
+	}
+	if share.Edges.User.ID == user.ID {
+		return nil, serializer.NewError(serializer.CodeParamErr, "cannot purchase your own share", nil)
+	}
+
+	props := share.Props
+	if props == nil || props.Price <= 0 {
+		return nil, serializer.NewError(serializer.CodeParamErr, "this share is free", nil)
+	}
+
+	if lo.Contains(props.PurchasedUsers, user.ID) {
+		return &BuyShareResponse{Purchased: true, Price: props.Price, Credit: user.Credit}, nil
+	}
+
+	if user.Credit < props.Price {
+		return nil, serializer.NewError(serializer.CodeInsufficientCredit, "Insufficient credits", nil)
+	}
+
+	// 扣减积分
+	newCredit := user.Credit - props.Price
+	if _, err := dep.UserClient().GetClient().User.UpdateOneID(user.ID).SetCredit(newCredit).Save(ctx); err != nil {
+		return nil, serializer.NewError(serializer.CodeDBError, "Failed to deduct credits", err)
+	}
+
+	// 记录购买者
+	newProps := *props
+	newProps.PurchasedUsers = lo.Uniq(append(append([]int{}, props.PurchasedUsers...), user.ID))
+	if _, err := dep.ShareClient().Upsert(ctx, &inventory.CreateShareParams{
+		Existed: share,
+		Props:   &newProps,
+	}); err != nil {
+		return nil, serializer.NewError(serializer.CodeDBError, "Failed to record purchase", err)
+	}
+
+	// 审计
+	admin.RecordEvent(c, &inventory.CreateEventParams{
+		Type:    types.AuditTypePointsChange,
+		UserID:  user.ID,
+		ShareID: share.ID,
+		Content: &types.AuditContent{
+			PointsChange: -props.Price,
+			Reason:       "purchase share access",
+		},
+	})
+
+	return &BuyShareResponse{Purchased: true, Price: props.Price, Credit: newCredit}, nil
 }

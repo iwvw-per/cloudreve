@@ -11,6 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/cloudreve/Cloudreve/v4/ent/abusereport"
+	"github.com/cloudreve/Cloudreve/v4/ent/event"
 	"github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
@@ -216,6 +218,36 @@ func (su *ShareUpdate) SetFile(f *File) *ShareUpdate {
 	return su.SetFileID(f.ID)
 }
 
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
+func (su *ShareUpdate) AddEventIDs(ids ...int) *ShareUpdate {
+	su.mutation.AddEventIDs(ids...)
+	return su
+}
+
+// AddEvents adds the "events" edges to the Event entity.
+func (su *ShareUpdate) AddEvents(e ...*Event) *ShareUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return su.AddEventIDs(ids...)
+}
+
+// AddAbuseReportIDs adds the "abuse_reports" edge to the AbuseReport entity by IDs.
+func (su *ShareUpdate) AddAbuseReportIDs(ids ...int) *ShareUpdate {
+	su.mutation.AddAbuseReportIDs(ids...)
+	return su
+}
+
+// AddAbuseReports adds the "abuse_reports" edges to the AbuseReport entity.
+func (su *ShareUpdate) AddAbuseReports(a ...*AbuseReport) *ShareUpdate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return su.AddAbuseReportIDs(ids...)
+}
+
 // Mutation returns the ShareMutation object of the builder.
 func (su *ShareUpdate) Mutation() *ShareMutation {
 	return su.mutation
@@ -231,6 +263,48 @@ func (su *ShareUpdate) ClearUser() *ShareUpdate {
 func (su *ShareUpdate) ClearFile() *ShareUpdate {
 	su.mutation.ClearFile()
 	return su
+}
+
+// ClearEvents clears all "events" edges to the Event entity.
+func (su *ShareUpdate) ClearEvents() *ShareUpdate {
+	su.mutation.ClearEvents()
+	return su
+}
+
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
+func (su *ShareUpdate) RemoveEventIDs(ids ...int) *ShareUpdate {
+	su.mutation.RemoveEventIDs(ids...)
+	return su
+}
+
+// RemoveEvents removes "events" edges to Event entities.
+func (su *ShareUpdate) RemoveEvents(e ...*Event) *ShareUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return su.RemoveEventIDs(ids...)
+}
+
+// ClearAbuseReports clears all "abuse_reports" edges to the AbuseReport entity.
+func (su *ShareUpdate) ClearAbuseReports() *ShareUpdate {
+	su.mutation.ClearAbuseReports()
+	return su
+}
+
+// RemoveAbuseReportIDs removes the "abuse_reports" edge to AbuseReport entities by IDs.
+func (su *ShareUpdate) RemoveAbuseReportIDs(ids ...int) *ShareUpdate {
+	su.mutation.RemoveAbuseReportIDs(ids...)
+	return su
+}
+
+// RemoveAbuseReports removes "abuse_reports" edges to AbuseReport entities.
+func (su *ShareUpdate) RemoveAbuseReports(a ...*AbuseReport) *ShareUpdate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return su.RemoveAbuseReportIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -383,6 +457,96 @@ func (su *ShareUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.EventsTable,
+			Columns: []string{share.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedEventsIDs(); len(nodes) > 0 && !su.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.EventsTable,
+			Columns: []string{share.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.EventsTable,
+			Columns: []string{share.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.AbuseReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.AbuseReportsTable,
+			Columns: []string{share.AbuseReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedAbuseReportsIDs(); len(nodes) > 0 && !su.mutation.AbuseReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.AbuseReportsTable,
+			Columns: []string{share.AbuseReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.AbuseReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.AbuseReportsTable,
+			Columns: []string{share.AbuseReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -595,6 +759,36 @@ func (suo *ShareUpdateOne) SetFile(f *File) *ShareUpdateOne {
 	return suo.SetFileID(f.ID)
 }
 
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
+func (suo *ShareUpdateOne) AddEventIDs(ids ...int) *ShareUpdateOne {
+	suo.mutation.AddEventIDs(ids...)
+	return suo
+}
+
+// AddEvents adds the "events" edges to the Event entity.
+func (suo *ShareUpdateOne) AddEvents(e ...*Event) *ShareUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return suo.AddEventIDs(ids...)
+}
+
+// AddAbuseReportIDs adds the "abuse_reports" edge to the AbuseReport entity by IDs.
+func (suo *ShareUpdateOne) AddAbuseReportIDs(ids ...int) *ShareUpdateOne {
+	suo.mutation.AddAbuseReportIDs(ids...)
+	return suo
+}
+
+// AddAbuseReports adds the "abuse_reports" edges to the AbuseReport entity.
+func (suo *ShareUpdateOne) AddAbuseReports(a ...*AbuseReport) *ShareUpdateOne {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return suo.AddAbuseReportIDs(ids...)
+}
+
 // Mutation returns the ShareMutation object of the builder.
 func (suo *ShareUpdateOne) Mutation() *ShareMutation {
 	return suo.mutation
@@ -610,6 +804,48 @@ func (suo *ShareUpdateOne) ClearUser() *ShareUpdateOne {
 func (suo *ShareUpdateOne) ClearFile() *ShareUpdateOne {
 	suo.mutation.ClearFile()
 	return suo
+}
+
+// ClearEvents clears all "events" edges to the Event entity.
+func (suo *ShareUpdateOne) ClearEvents() *ShareUpdateOne {
+	suo.mutation.ClearEvents()
+	return suo
+}
+
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
+func (suo *ShareUpdateOne) RemoveEventIDs(ids ...int) *ShareUpdateOne {
+	suo.mutation.RemoveEventIDs(ids...)
+	return suo
+}
+
+// RemoveEvents removes "events" edges to Event entities.
+func (suo *ShareUpdateOne) RemoveEvents(e ...*Event) *ShareUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return suo.RemoveEventIDs(ids...)
+}
+
+// ClearAbuseReports clears all "abuse_reports" edges to the AbuseReport entity.
+func (suo *ShareUpdateOne) ClearAbuseReports() *ShareUpdateOne {
+	suo.mutation.ClearAbuseReports()
+	return suo
+}
+
+// RemoveAbuseReportIDs removes the "abuse_reports" edge to AbuseReport entities by IDs.
+func (suo *ShareUpdateOne) RemoveAbuseReportIDs(ids ...int) *ShareUpdateOne {
+	suo.mutation.RemoveAbuseReportIDs(ids...)
+	return suo
+}
+
+// RemoveAbuseReports removes "abuse_reports" edges to AbuseReport entities.
+func (suo *ShareUpdateOne) RemoveAbuseReports(a ...*AbuseReport) *ShareUpdateOne {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return suo.RemoveAbuseReportIDs(ids...)
 }
 
 // Where appends a list predicates to the ShareUpdate builder.
@@ -792,6 +1028,96 @@ func (suo *ShareUpdateOne) sqlSave(ctx context.Context) (_node *Share, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.EventsTable,
+			Columns: []string{share.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedEventsIDs(); len(nodes) > 0 && !suo.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.EventsTable,
+			Columns: []string{share.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.EventsTable,
+			Columns: []string{share.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.AbuseReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.AbuseReportsTable,
+			Columns: []string{share.AbuseReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedAbuseReportsIDs(); len(nodes) > 0 && !suo.mutation.AbuseReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.AbuseReportsTable,
+			Columns: []string{share.AbuseReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.AbuseReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   share.AbuseReportsTable,
+			Columns: []string{share.AbuseReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

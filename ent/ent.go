@@ -12,17 +12,22 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/cloudreve/Cloudreve/v4/ent/abusereport"
 	"github.com/cloudreve/Cloudreve/v4/ent/davaccount"
 	"github.com/cloudreve/Cloudreve/v4/ent/directlink"
 	"github.com/cloudreve/Cloudreve/v4/ent/entity"
+	"github.com/cloudreve/Cloudreve/v4/ent/event"
 	"github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/ent/fsevent"
+	"github.com/cloudreve/Cloudreve/v4/ent/giftcode"
 	"github.com/cloudreve/Cloudreve/v4/ent/group"
 	"github.com/cloudreve/Cloudreve/v4/ent/metadata"
 	"github.com/cloudreve/Cloudreve/v4/ent/node"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthclient"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
+	"github.com/cloudreve/Cloudreve/v4/ent/order"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
+	"github.com/cloudreve/Cloudreve/v4/ent/product"
 	"github.com/cloudreve/Cloudreve/v4/ent/setting"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
 	"github.com/cloudreve/Cloudreve/v4/ent/storagepolicy"
@@ -88,17 +93,22 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			abusereport.Table:   abusereport.ValidColumn,
 			davaccount.Table:    davaccount.ValidColumn,
 			directlink.Table:    directlink.ValidColumn,
 			entity.Table:        entity.ValidColumn,
+			event.Table:         event.ValidColumn,
 			file.Table:          file.ValidColumn,
 			fsevent.Table:       fsevent.ValidColumn,
+			giftcode.Table:      giftcode.ValidColumn,
 			group.Table:         group.ValidColumn,
 			metadata.Table:      metadata.ValidColumn,
 			node.Table:          node.ValidColumn,
 			oauthclient.Table:   oauthclient.ValidColumn,
 			oauthgrant.Table:    oauthgrant.ValidColumn,
+			order.Table:         order.ValidColumn,
 			passkey.Table:       passkey.ValidColumn,
+			product.Table:       product.ValidColumn,
 			setting.Table:       setting.ValidColumn,
 			share.Table:         share.ValidColumn,
 			storagepolicy.Table: storagepolicy.ValidColumn,

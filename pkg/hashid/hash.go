@@ -22,6 +22,10 @@ const (
 	TaskID
 	DavAccountID
 	PaymentID
+	ProductID
+	OrderID
+	GiftCodeID
+	AbuseReportID
 )
 
 var (
@@ -144,6 +148,36 @@ func EncodeDavAccountID(encoder Encoder, id int) string {
 // EncodeSourceLinkID encode source link id to hash id
 func EncodeSourceLinkID(encoder Encoder, id int) string {
 	res, _ := encoder.Encode([]int{id, SourceLinkID})
+	return res
+}
+
+// EncodeEventID encode event id to hash id
+func EncodeEventID(encoder Encoder, id int) string {
+	res, _ := encoder.Encode([]int{id, AuditLogID})
+	return res
+}
+
+// EncodeProductID encode product id to hash id
+func EncodeProductID(encoder Encoder, id int) string {
+	res, _ := encoder.Encode([]int{id, ProductID})
+	return res
+}
+
+// EncodeOrderID encode order id to hash id
+func EncodeOrderID(encoder Encoder, id int) string {
+	res, _ := encoder.Encode([]int{id, OrderID})
+	return res
+}
+
+// EncodeGiftCodeID encode gift code id to hash id
+func EncodeGiftCodeID(encoder Encoder, id int) string {
+	res, _ := encoder.Encode([]int{id, GiftCodeID})
+	return res
+}
+
+// EncodeAbuseReportID encode abuse report id to hash id
+func EncodeAbuseReportID(encoder Encoder, id int) string {
+	res, _ := encoder.Encode([]int{id, AbuseReportID})
 	return res
 }
 

@@ -666,13 +666,43 @@ func (f *DBFS) generateEncryptMetadata(ctx context.Context, uploadRequest *fs.Up
 }
 
 // getPreferredPolicy tries to get the preferred storage policy for the given file.
+// 解析顺序：
+//  1. 目录/文件自身的偏好策略（FileProps.PreferredStoragePolicyID），沿父目录链向上查找；
+//  2. 用户组配置的多存储策略（AvailablePolicyIDs）；
+//  3. 回退到组主边（storage_policy_id）。
 func (f *DBFS) getPreferredPolicy(ctx context.Context, file *File) (*ent.StoragePolicy, error) {
+	sc, _ := inventory.InheritTx(ctx, f.storagePolicyClient)
+
+	// 1. 沿父目录链向上查找设置了偏好存储策略的目录
+	if file != nil {
+		for cur := file; cur != nil && cur.Model != nil; cur = cur.Parent {
+			if cur.Model.Props != nil && cur.Model.Props.PreferredStoragePolicyID != 0 {
+				p, err := sc.GetPolicyByID(ctx, cur.Model.Props.PreferredStoragePolicyID)
+				if err == nil && p != nil && p.Settings != nil {
+					return p, nil
+				}
+			}
+		}
+	}
+
 	ownerGroup := file.Owner().Edges.Group
 	if ownerGroup == nil {
 		return nil, fmt.Errorf("owner group not loaded")
 	}
 
-	sc, _ := inventory.InheritTx(ctx, f.storagePolicyClient)
+	// 2. 组配置了多存储策略时，按顺序取第一个可用的策略作为默认；
+	//    若该策略为 load_balance，由调用方 resolveLoadBalancePolicy 解析为具体子策略。
+	if ownerGroup.Settings != nil && len(ownerGroup.Settings.AvailablePolicyIDs) > 0 {
+		for _, pid := range ownerGroup.Settings.AvailablePolicyIDs {
+			p, err := sc.GetPolicyByID(ctx, pid)
+			if err != nil || p == nil || p.Settings == nil {
+				continue
+			}
+			return p, nil
+		}
+	}
+
+	// 3. 回退：组主边存储策略
 	groupPolicy, err := sc.GetByGroup(ctx, ownerGroup)
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeDBError, "Failed to get available storage policies", err)

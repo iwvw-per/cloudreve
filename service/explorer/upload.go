@@ -27,6 +27,7 @@ type (
 		LastModified        int64             `json:"last_modified"`
 		MimeType            string            `json:"mime_type"`
 		PolicyID            string            `json:"policy_id"`
+		StoragePolicyID     int               `json:"storage_policy_id"`
 		Metadata            map[string]string `json:"metadata" binding:"max=256"`
 		EntityType          string            `json:"entity_type" binding:"eq=|eq=live_photo|eq=version"`
 		EncryptionSupported []types.Cipher    `json:"encryption_supported"`
@@ -65,6 +66,19 @@ func (service *CreateUploadSessionService) Create(c context.Context) (*UploadSes
 		}
 	}
 
+	// 解析上传要使用的存储策略：
+	// 1. 用户显式指定（storage_policy_id / policy_id），校验其是否在用户组可用策略内；
+	// 2. 未指定时，向上查找父目录链中的目录偏好策略；
+	// 3. 都未命中时回退用户组默认策略（PreferredStoragePolicy 保持 0）。
+	requestedPolicyID := policyId
+	if service.StoragePolicyID != 0 {
+		requestedPolicyID = service.StoragePolicyID
+	}
+	if requestedPolicyID == 0 {
+		requestedPolicyID = walkUpDirectoryPreferredPolicy(c, dep, user, uri)
+	}
+	preferredPolicyID := resolveUploadPolicyID(c, dep, user, requestedPolicyID)
+
 	uploadRequest := &fs.UploadRequest{
 		Props: &fs.UploadProps{
 			Uri:  uri,
@@ -74,7 +88,7 @@ func (service *CreateUploadSessionService) Create(c context.Context) (*UploadSes
 			MimeType:               service.MimeType,
 			Metadata:               service.Metadata,
 			EntityType:             entityType,
-			PreferredStoragePolicy: policyId,
+			PreferredStoragePolicy: preferredPolicyID,
 			EncryptionSupported:    service.EncryptionSupported,
 			ClientSideEncrypted:    len(service.EncryptionSupported) > 0,
 		},

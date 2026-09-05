@@ -105,6 +105,11 @@ func GroupUsers(v int) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldGroupUsers, v))
 }
 
+// Credit applies equality check predicate on the "credit" field. It's identical to CreditEQ.
+func Credit(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldCredit, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
@@ -680,6 +685,46 @@ func GroupUsersNotIn(vs ...int) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldGroupUsers, vs...))
 }
 
+// CreditEQ applies the EQ predicate on the "credit" field.
+func CreditEQ(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldCredit, v))
+}
+
+// CreditNEQ applies the NEQ predicate on the "credit" field.
+func CreditNEQ(v int) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldCredit, v))
+}
+
+// CreditIn applies the In predicate on the "credit" field.
+func CreditIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldIn(FieldCredit, vs...))
+}
+
+// CreditNotIn applies the NotIn predicate on the "credit" field.
+func CreditNotIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldCredit, vs...))
+}
+
+// CreditGT applies the GT predicate on the "credit" field.
+func CreditGT(v int) predicate.User {
+	return predicate.User(sql.FieldGT(FieldCredit, v))
+}
+
+// CreditGTE applies the GTE predicate on the "credit" field.
+func CreditGTE(v int) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldCredit, v))
+}
+
+// CreditLT applies the LT predicate on the "credit" field.
+func CreditLT(v int) predicate.User {
+	return predicate.User(sql.FieldLT(FieldCredit, v))
+}
+
+// CreditLTE applies the LTE predicate on the "credit" field.
+func CreditLTE(v int) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldCredit, v))
+}
+
 // HasGroup applies the HasEdge predicate on the "group" edge.
 func HasGroup() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -879,6 +924,121 @@ func HasOauthGrants() predicate.User {
 func HasOauthGrantsWith(preds ...predicate.OAuthGrant) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newOauthGrantsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasEvents applies the HasEdge predicate on the "events" edge.
+func HasEvents() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EventsTable, EventsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEventsWith applies the HasEdge predicate on the "events" edge with a given conditions (other predicates).
+func HasEventsWith(preds ...predicate.Event) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newEventsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasOrders applies the HasEdge predicate on the "orders" edge.
+func HasOrders() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, OrdersTable, OrdersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOrdersWith applies the HasEdge predicate on the "orders" edge with a given conditions (other predicates).
+func HasOrdersWith(preds ...predicate.Order) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newOrdersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasGiftCodes applies the HasEdge predicate on the "gift_codes" edge.
+func HasGiftCodes() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, GiftCodesTable, GiftCodesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGiftCodesWith applies the HasEdge predicate on the "gift_codes" edge with a given conditions (other predicates).
+func HasGiftCodesWith(preds ...predicate.GiftCode) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newGiftCodesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAbuseReportsMade applies the HasEdge predicate on the "abuse_reports_made" edge.
+func HasAbuseReportsMade() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AbuseReportsMadeTable, AbuseReportsMadeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAbuseReportsMadeWith applies the HasEdge predicate on the "abuse_reports_made" edge with a given conditions (other predicates).
+func HasAbuseReportsMadeWith(preds ...predicate.AbuseReport) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newAbuseReportsMadeStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAbuseReportsReceived applies the HasEdge predicate on the "abuse_reports_received" edge.
+func HasAbuseReportsReceived() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AbuseReportsReceivedTable, AbuseReportsReceivedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAbuseReportsReceivedWith applies the HasEdge predicate on the "abuse_reports_received" edge with a given conditions (other predicates).
+func HasAbuseReportsReceivedWith(preds ...predicate.AbuseReport) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newAbuseReportsReceivedStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

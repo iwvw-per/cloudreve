@@ -44,6 +44,8 @@ type User struct {
 	Settings *types.UserSetting `json:"settings,omitempty"`
 	// GroupUsers holds the value of the "group_users" field.
 	GroupUsers int `json:"group_users,omitempty"`
+	// User credit points balance
+	Credit int `json:"credit,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -70,9 +72,19 @@ type UserEdges struct {
 	Entities []*Entity `json:"entities,omitempty"`
 	// OauthGrants holds the value of the oauth_grants edge.
 	OauthGrants []*OAuthGrant `json:"oauth_grants,omitempty"`
+	// Events holds the value of the events edge.
+	Events []*Event `json:"events,omitempty"`
+	// Orders holds the value of the orders edge.
+	Orders []*Order `json:"orders,omitempty"`
+	// GiftCodes holds the value of the gift_codes edge.
+	GiftCodes []*GiftCode `json:"gift_codes,omitempty"`
+	// AbuseReportsMade holds the value of the abuse_reports_made edge.
+	AbuseReportsMade []*AbuseReport `json:"abuse_reports_made,omitempty"`
+	// AbuseReportsReceived holds the value of the abuse_reports_received edge.
+	AbuseReportsReceived []*AbuseReport `json:"abuse_reports_received,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [9]bool
+	loadedTypes [14]bool
 }
 
 // GroupOrErr returns the Group value or an error if the edge
@@ -160,6 +172,51 @@ func (e UserEdges) OauthGrantsOrErr() ([]*OAuthGrant, error) {
 	return nil, &NotLoadedError{edge: "oauth_grants"}
 }
 
+// EventsOrErr returns the Events value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) EventsOrErr() ([]*Event, error) {
+	if e.loadedTypes[9] {
+		return e.Events, nil
+	}
+	return nil, &NotLoadedError{edge: "events"}
+}
+
+// OrdersOrErr returns the Orders value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) OrdersOrErr() ([]*Order, error) {
+	if e.loadedTypes[10] {
+		return e.Orders, nil
+	}
+	return nil, &NotLoadedError{edge: "orders"}
+}
+
+// GiftCodesOrErr returns the GiftCodes value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) GiftCodesOrErr() ([]*GiftCode, error) {
+	if e.loadedTypes[11] {
+		return e.GiftCodes, nil
+	}
+	return nil, &NotLoadedError{edge: "gift_codes"}
+}
+
+// AbuseReportsMadeOrErr returns the AbuseReportsMade value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) AbuseReportsMadeOrErr() ([]*AbuseReport, error) {
+	if e.loadedTypes[12] {
+		return e.AbuseReportsMade, nil
+	}
+	return nil, &NotLoadedError{edge: "abuse_reports_made"}
+}
+
+// AbuseReportsReceivedOrErr returns the AbuseReportsReceived value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) AbuseReportsReceivedOrErr() ([]*AbuseReport, error) {
+	if e.loadedTypes[13] {
+		return e.AbuseReportsReceived, nil
+	}
+	return nil, &NotLoadedError{edge: "abuse_reports_received"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -167,7 +224,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldSettings:
 			values[i] = new([]byte)
-		case user.FieldID, user.FieldStorage, user.FieldGroupUsers:
+		case user.FieldID, user.FieldStorage, user.FieldGroupUsers, user.FieldCredit:
 			values[i] = new(sql.NullInt64)
 		case user.FieldEmail, user.FieldNick, user.FieldPassword, user.FieldStatus, user.FieldTwoFactorSecret, user.FieldAvatar:
 			values[i] = new(sql.NullString)
@@ -269,6 +326,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.GroupUsers = int(value.Int64)
 			}
+		case user.FieldCredit:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field credit", values[i])
+			} else if value.Valid {
+				u.Credit = int(value.Int64)
+			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
 		}
@@ -325,6 +388,31 @@ func (u *User) QueryEntities() *EntityQuery {
 // QueryOauthGrants queries the "oauth_grants" edge of the User entity.
 func (u *User) QueryOauthGrants() *OAuthGrantQuery {
 	return NewUserClient(u.config).QueryOauthGrants(u)
+}
+
+// QueryEvents queries the "events" edge of the User entity.
+func (u *User) QueryEvents() *EventQuery {
+	return NewUserClient(u.config).QueryEvents(u)
+}
+
+// QueryOrders queries the "orders" edge of the User entity.
+func (u *User) QueryOrders() *OrderQuery {
+	return NewUserClient(u.config).QueryOrders(u)
+}
+
+// QueryGiftCodes queries the "gift_codes" edge of the User entity.
+func (u *User) QueryGiftCodes() *GiftCodeQuery {
+	return NewUserClient(u.config).QueryGiftCodes(u)
+}
+
+// QueryAbuseReportsMade queries the "abuse_reports_made" edge of the User entity.
+func (u *User) QueryAbuseReportsMade() *AbuseReportQuery {
+	return NewUserClient(u.config).QueryAbuseReportsMade(u)
+}
+
+// QueryAbuseReportsReceived queries the "abuse_reports_received" edge of the User entity.
+func (u *User) QueryAbuseReportsReceived() *AbuseReportQuery {
+	return NewUserClient(u.config).QueryAbuseReportsReceived(u)
 }
 
 // Update returns a builder for updating this User.
@@ -385,6 +473,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("group_users=")
 	builder.WriteString(fmt.Sprintf("%v", u.GroupUsers))
+	builder.WriteString(", ")
+	builder.WriteString("credit=")
+	builder.WriteString(fmt.Sprintf("%v", u.Credit))
 	builder.WriteByte(')')
 	return builder.String()
 }
@@ -441,6 +532,36 @@ func (e *User) SetEntities(v []*Entity) {
 func (e *User) SetOauthGrants(v []*OAuthGrant) {
 	e.Edges.OauthGrants = v
 	e.Edges.loadedTypes[8] = true
+}
+
+// SetEvents manually set the edge as loaded state.
+func (e *User) SetEvents(v []*Event) {
+	e.Edges.Events = v
+	e.Edges.loadedTypes[9] = true
+}
+
+// SetOrders manually set the edge as loaded state.
+func (e *User) SetOrders(v []*Order) {
+	e.Edges.Orders = v
+	e.Edges.loadedTypes[10] = true
+}
+
+// SetGiftCodes manually set the edge as loaded state.
+func (e *User) SetGiftCodes(v []*GiftCode) {
+	e.Edges.GiftCodes = v
+	e.Edges.loadedTypes[11] = true
+}
+
+// SetAbuseReportsMade manually set the edge as loaded state.
+func (e *User) SetAbuseReportsMade(v []*AbuseReport) {
+	e.Edges.AbuseReportsMade = v
+	e.Edges.loadedTypes[12] = true
+}
+
+// SetAbuseReportsReceived manually set the edge as loaded state.
+func (e *User) SetAbuseReportsReceived(v []*AbuseReport) {
+	e.Edges.AbuseReportsReceived = v
+	e.Edges.loadedTypes[13] = true
 }
 
 // Users is a parsable slice of User.

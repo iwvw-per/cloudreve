@@ -73,12 +73,12 @@ func init() {
 }
 
 // NewExtractArchiveTask creates a new ExtractArchiveTask
-func NewExtractArchiveTask(ctx context.Context, src, dst, encoding, password string, mask []string) (queue.Task, error) {
+func NewExtractArchiveTask(ctx context.Context, src, dst, encoding, password string, mask []string, nodeID int) (queue.Task, error) {
 	state := &ExtractArchiveTaskState{
 		Uri:       src,
 		Dst:       dst,
 		Encoding:  encoding,
-		NodeState: NodeState{},
+		NodeState: NodeState{NodeID: nodeID},
 		Password:  password,
 		FileMask:  mask,
 	}

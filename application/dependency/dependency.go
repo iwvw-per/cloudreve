@@ -106,6 +106,16 @@ type Dep interface {
 	ShareClient() inventory.ShareClient
 	// TaskClient Creates a new inventory.TaskClient instance for access DB task store.
 	TaskClient() inventory.TaskClient
+	// EventClient Creates a new inventory.EventClient instance for access DB audit log store.
+	EventClient() inventory.EventClient
+	// OrderClient Creates a new inventory.OrderClient instance for access DB order store.
+	OrderClient() inventory.OrderClient
+	// ProductClient Creates a new inventory.ProductClient instance for access DB product store.
+	ProductClient() inventory.ProductClient
+	// GiftCodeClient Creates a new inventory.GiftCodeClient instance for access DB gift code store.
+	GiftCodeClient() inventory.GiftCodeClient
+	// AbuseReportClient Creates a new inventory.AbuseReportClient instance for access DB abuse report store.
+	AbuseReportClient() inventory.AbuseReportClient
 	// ForkWithLogger create a shallow copy of dependency with a new correlated logger, used as per-request dep.
 	ForkWithLogger(ctx context.Context, l logging.Logger) context.Context
 	// MediaMetaQueue Get a singleton queue.Queue instance for media metadata processing.
@@ -170,6 +180,11 @@ type dependency struct {
 	directLinkClient      inventory.DirectLinkClient
 	fsEventClient         inventory.FsEventClient
 	oAuthClient           inventory.OAuthClientClient
+	eventClient           inventory.EventClient
+	orderClient           inventory.OrderClient
+	productClient         inventory.ProductClient
+	giftCodeClient        inventory.GiftCodeClient
+	abuseReportClient     inventory.AbuseReportClient
 	emailClient           email.Driver
 	generalAuth           auth.Auth
 	hashidEncoder         hashid.Encoder
@@ -558,6 +573,51 @@ func (d *dependency) OAuthClientClient() inventory.OAuthClientClient {
 	}
 
 	return inventory.NewOAuthClientClient(d.DBClient(), d.ConfigProvider().Database().Type)
+}
+
+func (d *dependency) EventClient() inventory.EventClient {
+	if d.eventClient != nil {
+		return d.eventClient
+	}
+
+	d.eventClient = inventory.NewEventClient(d.DBClient(), d.ConfigProvider().Database().Type, d.HashIDEncoder())
+	return d.eventClient
+}
+
+func (d *dependency) OrderClient() inventory.OrderClient {
+	if d.orderClient != nil {
+		return d.orderClient
+	}
+
+	d.orderClient = inventory.NewOrderClient(d.DBClient(), d.ConfigProvider().Database().Type, d.HashIDEncoder())
+	return d.orderClient
+}
+
+func (d *dependency) ProductClient() inventory.ProductClient {
+	if d.productClient != nil {
+		return d.productClient
+	}
+
+	d.productClient = inventory.NewProductClient(d.DBClient(), d.ConfigProvider().Database().Type, d.HashIDEncoder())
+	return d.productClient
+}
+
+func (d *dependency) GiftCodeClient() inventory.GiftCodeClient {
+	if d.giftCodeClient != nil {
+		return d.giftCodeClient
+	}
+
+	d.giftCodeClient = inventory.NewGiftCodeClient(d.DBClient(), d.ConfigProvider().Database().Type, d.HashIDEncoder())
+	return d.giftCodeClient
+}
+
+func (d *dependency) AbuseReportClient() inventory.AbuseReportClient {
+	if d.abuseReportClient != nil {
+		return d.abuseReportClient
+	}
+
+	d.abuseReportClient = inventory.NewAbuseReportClient(d.DBClient(), d.ConfigProvider().Database().Type, d.HashIDEncoder())
+	return d.abuseReportClient
 }
 
 func (d *dependency) MimeDetector(ctx context.Context) mime.MimeDetector {

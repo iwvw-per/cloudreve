@@ -36,6 +36,11 @@ type (
 		MaxWalkedFiles        int                    `json:"max_walked_files,omitempty"`
 		TrashRetention        int                    `json:"trash_retention,omitempty"`
 		RedirectedSource      bool                   `json:"redirected_source,omitempty"`
+		DefaultShares         []string               `json:"default_shares,omitempty"` // 默认固定分享
+		AllowedNodes          []int                  `json:"allowed_nodes,omitempty"`  // 可用任务节点
+		// AvailablePolicyIDs 该组可用的多个存储策略（PRO 多存储策略）。
+		// 与默认 storage_policies 边兼容：为空时回退到边的单一策略。
+		AvailablePolicyIDs []int `json:"available_policy_ids,omitempty"`
 	}
 
 	// PolicySetting 非公有的存储策略属性
@@ -105,6 +110,15 @@ type (
 		ChunkConcurrency int `json:"chunk_concurrency,omitempty"`
 		// Whether to enable file encryption.
 		Encryption bool `json:"encryption,omitempty"`
+		// LoadBalancer 负载均衡存储策略配置：子策略 ID → 权重。
+		// 仅对 PolicyType load_balance 生效。
+		LoadBalancer *LoadBalancerConfig `json:"load_balancer,omitempty"`
+	}
+
+	// LoadBalancerConfig 负载均衡存储策略配置。
+	LoadBalancerConfig struct {
+		// Weights 子存储策略 ID → 权重。
+		Weights map[int]int `json:"weights,omitempty"`
 	}
 
 	FileType         int
@@ -197,6 +211,25 @@ type (
 
 	FileProps struct {
 		View *ExplorerView `json:"view,omitempty"`
+		// PreferredStoragePolicyID sets a per-directory/per-file storage policy.
+		// New uploads under this file inherit the preferred policy.
+		PreferredStoragePolicyID int `json:"preferred_storage_policy_id,omitempty"`
+		// Permissions holds per-file permission overrides (PRO file permission management).
+		Permissions *FileAccessRule `json:"permissions,omitempty"`
+	}
+
+	// FileAccessRule 文件级权限管理（PRO）。空字段表示继承默认/未设置。
+	FileAccessRule struct {
+		// AllowUsers 指定用户（user id）访问白名单
+		AllowUsers []int `json:"allow_users,omitempty"`
+		// DenyUsers 指定用户（user id）访问黑名单
+		DenyUsers []int `json:"deny_users,omitempty"`
+		// AllowGroups 指定用户组（group id）访问白名单
+		AllowGroups []int `json:"allow_groups,omitempty"`
+		// DenyGroups 指定用户组（group id）访问黑名单
+		DenyGroups []int `json:"deny_groups,omitempty"`
+		// Anonymous 匿名用户访问级别：0=inherit,1=view,2=download,3=write
+		Anonymous int `json:"anonymous,omitempty"`
 	}
 
 	ExplorerView struct {
@@ -225,6 +258,18 @@ type (
 		ShareView bool `json:"share_view,omitempty"`
 		// Whether to automatically show readme file in share view
 		ShowReadMe bool `json:"show_read_me,omitempty"`
+		// Price in credits to access this share (0 = free)
+		Price int `json:"price,omitempty"`
+		// AllowUpload allows visitors to upload files via the share link
+		AllowUpload bool `json:"allow_upload,omitempty"`
+		// AllowModify allows visitors to modify files via the share link
+		AllowModify bool `json:"allow_modify,omitempty"`
+		// AllowDelete allows visitors to delete files via the share link
+		AllowDelete bool `json:"allow_delete,omitempty"`
+		// AllowAnonymousUpload allows anonymous visitors to upload via the share link
+		AllowAnonymousUpload bool `json:"allow_anonymous_upload,omitempty"`
+		// PurchasedUsers lists the user IDs who have purchased access to this share.
+		PurchasedUsers []int `json:"purchased_users,omitempty"`
 	}
 
 	OAuthClientProps struct {
@@ -240,6 +285,65 @@ type (
 		ColorDark string   `json:"color_dark,omitempty"`
 		Img       string   `json:"img,omitempty"`
 	}
+
+	// AuditContent 操作日志/审计事件的附加内容，与前端 LogEntry 对齐。
+	AuditContent struct {
+		Category          int               `json:"category,omitempty"`
+		Failed            bool              `json:"failed,omitempty"`
+		Error             string            `json:"error,omitempty"`
+		UserAgent         string            `json:"user_agent,omitempty"`
+		IsSystem          bool              `json:"is_system,omitempty"`
+		Reason            string            `json:"reason,omitempty"`
+		EmailTo           string            `json:"email_to,omitempty"`
+		EmailTitle        string            `json:"email_title,omitempty"`
+		OriginalName      string            `json:"original_name,omitempty"`
+		NewName           string            `json:"new_name,omitempty"`
+		From              string            `json:"from,omitempty"`
+		To                string            `json:"to,omitempty"`
+		EntityCreateTime  string            `json:"entity_create_time,omitempty"`
+		StoragePolicyID   string            `json:"storage_policy_id,omitempty"`
+		StoragePolicyName string            `json:"storage_policy_name,omitempty"`
+		AccountID         int               `json:"account_id,omitempty"`
+		Account           string            `json:"account,omitempty"`
+		AccountURI        string            `json:"account_uri,omitempty"`
+		PaymentID         int               `json:"payment_id,omitempty"`
+		PointsChange      int               `json:"points_change,omitempty"`
+		Sku               string            `json:"sku,omitempty"`
+		StorageSize       int64             `json:"storage_size,omitempty"`
+		Expire            string            `json:"expire,omitempty"`
+		GroupID           int               `json:"group_id,omitempty"`
+		GroupIDFrom       int               `json:"group_id_from,omitempty"`
+		DirectLinkID      string            `json:"direct_link_id,omitempty"`
+		OpenIDProvider    int               `json:"openid_provider,omitempty"`
+		Sub               string            `json:"sub,omitempty"`
+		Name              string            `json:"name,omitempty"`
+		PasskeyID         int               `json:"passkey_id,omitempty"`
+		Exts              map[string]string `json:"exts,omitempty"`
+	}
+
+	// ProductProps 增值服务商品属性（存储套餐/会员套餐/积分商品）。
+	ProductProps struct {
+		// Size 存储套餐容量（字节）
+		Size int64 `json:"size,omitempty"`
+		// DurationDays 有效期（天），0 表示永久
+		DurationDays int `json:"duration_days,omitempty"`
+		// GroupID 会员套餐升级到的用户组
+		GroupID int `json:"group_id,omitempty"`
+		// CreditAmount 积分商品对应的积分数量
+		CreditAmount int `json:"credit_amount,omitempty"`
+		// Description 商品描述，多行
+		Description []string `json:"description,omitempty"`
+		// PriceCredits 可用积分购买的价格，0 表示不能用积分购买
+		PriceCredits int `json:"price_credits,omitempty"`
+	}
+
+	// GiftCodeProps 兑换码附加属性。
+	GiftCodeProps struct {
+		// LinkedProduct 对应商品
+		LinkedProduct int `json:"linked_product,omitempty"`
+		// ProductQty 商品数量（积分类为积分数量，其他为时长倍数）
+		ProductQty int `json:"product_qty,omitempty"`
+	}
 )
 
 const (
@@ -251,14 +355,14 @@ const (
 	GroupPermissionArchiveTask
 	GroupPermissionWebDAVProxy
 	GroupPermissionShareDownload
-	GroupPermission_CommunityPlaceholder1
+	GroupPermissionShareFree
 	GroupPermissionRemoteDownload
-	GroupPermission_CommunityPlaceholder2
+	GroupPermissionFolderDirectLink
 	GroupPermissionRedirectedSource // not used
 	GroupPermissionAdvanceDelete
-	GroupPermission_CommunityPlaceholder3
-	GroupPermission_CommunityPlaceholder4
-	GroupPermissionSetExplicitUser_placeholder
+	GroupPermissionEscalateAnonymity
+	GroupPermissionMigratePolicy
+	GroupPermissionAllowSelectNode
 	GroupPermissionIgnoreFileOwnership // not used
 	GroupPermissionUniqueRedirectDirectLink
 )
@@ -299,16 +403,17 @@ const (
 )
 
 const (
-	PolicyTypeLocal  = "local"
-	PolicyTypeQiniu  = "qiniu"
-	PolicyTypeUpyun  = "upyun"
-	PolicyTypeOss    = "oss"
-	PolicyTypeCos    = "cos"
-	PolicyTypeS3     = "s3"
-	PolicyTypeKs3    = "ks3"
-	PolicyTypeOd     = "onedrive"
-	PolicyTypeRemote = "remote"
-	PolicyTypeObs    = "obs"
+	PolicyTypeLocal       = "local"
+	PolicyTypeQiniu       = "qiniu"
+	PolicyTypeUpyun       = "upyun"
+	PolicyTypeOss         = "oss"
+	PolicyTypeCos         = "cos"
+	PolicyTypeS3          = "s3"
+	PolicyTypeKs3         = "ks3"
+	PolicyTypeOd          = "onedrive"
+	PolicyTypeRemote      = "remote"
+	PolicyTypeObs         = "obs"
+	PolicyTypeLoadBalance = "load_balance"
 )
 
 const (
@@ -413,4 +518,111 @@ const (
 	ScopeFinanceWrite          = "Finance.Write"
 	ScopeDavAccountRead        = "DavAccount.Read"
 	ScopeDavAccountWrite       = "DavAccount.Write"
+)
+
+// ProductType 增值服务商品类型。
+type ProductType string
+
+const (
+	ProductTypeStorage ProductType = "storage_pack" // 存储套餐
+	ProductTypeGroup   ProductType = "group"        // 会员套餐（升级用户组）
+	ProductTypeCredit  ProductType = "credit"       // 积分商品
+)
+
+// OrderStatus 订单状态。
+type OrderStatus string
+
+const (
+	OrderStatusUnpaid    OrderStatus = "unpaid"
+	OrderStatusPaid      OrderStatus = "paid"
+	OrderStatusFulfilled OrderStatus = "fulfilled"
+	OrderStatusFailed    OrderStatus = "failed"
+)
+
+// AbuseStatus 举报处理状态。
+type AbuseStatus string
+
+const (
+	AbuseStatusPending  AbuseStatus = "pending"
+	AbuseStatusResolved AbuseStatus = "resolved"
+	AbuseStatusIgnored  AbuseStatus = "ignored"
+)
+
+// PaymentProvider 支付渠道。
+type PaymentProvider string
+
+const (
+	PaymentProviderAlipay  PaymentProvider = "alipay"
+	PaymentProviderWechat  PaymentProvider = "wechat"
+	PaymentProviderPayJS   PaymentProvider = "payjs"
+	PaymentProviderCustom  PaymentProvider = "custom"
+	PaymentProviderCredits PaymentProvider = "credits"
+)
+
+// AuditType 操作日志类型，与前端 explorer.ts 的 AuditLogType 枚举一致。
+type AuditType int
+
+const (
+	AuditTypeServerStart           AuditType = 0
+	AuditTypeUserSignup            AuditType = 1
+	AuditTypeEmailSent             AuditType = 2
+	AuditTypeUserActivated         AuditType = 3
+	AuditTypeUserLoginFailed       AuditType = 4
+	AuditTypeUserLogin             AuditType = 5
+	AuditTypeUserTokenRefresh      AuditType = 6
+	AuditTypeFileCreate            AuditType = 7
+	AuditTypeFileRename            AuditType = 8
+	AuditTypeSetFilePermission     AuditType = 9
+	AuditTypeEntityUploaded        AuditType = 10
+	AuditTypeEntityDownloaded      AuditType = 11
+	AuditTypeCopyFrom              AuditType = 12
+	AuditTypeCopyTo                AuditType = 13
+	AuditTypeMoveTo                AuditType = 14
+	AuditTypeDeleteFile            AuditType = 15
+	AuditTypeMoveToTrash           AuditType = 16
+	AuditTypeShare                 AuditType = 17
+	AuditTypeShareLinkViewed       AuditType = 18
+	AuditTypeSetCurrentVersion     AuditType = 19
+	AuditTypeDeleteVersion         AuditType = 20
+	AuditTypeThumbGenerated        AuditType = 21
+	AuditTypeLivePhotoUploaded     AuditType = 22
+	AuditTypeUpdateMetadata        AuditType = 23
+	AuditTypeEditShare             AuditType = 24
+	AuditTypeDeleteShare           AuditType = 25
+	AuditTypeMount                 AuditType = 26
+	AuditTypeRelocate              AuditType = 27
+	AuditTypeCreateArchive         AuditType = 28
+	AuditTypeExtractArchive        AuditType = 29
+	AuditTypeWebdavLoginFailed     AuditType = 30
+	AuditTypeWebdavAccountCreate   AuditType = 31
+	AuditTypeWebdavAccountUpdate   AuditType = 32
+	AuditTypeWebdavAccountDelete   AuditType = 33
+	AuditTypePaymentCreated        AuditType = 34
+	AuditTypePointsChange          AuditType = 35
+	AuditTypePaymentPaid           AuditType = 36
+	AuditTypePaymentFulfilled      AuditType = 37
+	AuditTypePaymentFulfillFailed  AuditType = 38
+	AuditTypeStorageAdded          AuditType = 39
+	AuditTypeGroupChanged          AuditType = 40
+	AuditTypeUserExceedQuota       AuditType = 41
+	AuditTypeUserChanged           AuditType = 42
+	AuditTypeGetDirectLink         AuditType = 43
+	AuditTypeLinkAccount           AuditType = 44
+	AuditTypeUnlinkAccount         AuditType = 45
+	AuditTypeChangeNick            AuditType = 46
+	AuditTypeChangeAvatar          AuditType = 47
+	AuditTypeMembershipUnsubscribe AuditType = 48
+	AuditTypeChangePassword        AuditType = 49
+	AuditTypeEnable2FA             AuditType = 50
+	AuditTypeDisable2FA            AuditType = 51
+	AuditTypeAddPasskey            AuditType = 52
+	AuditTypeRemovePasskey         AuditType = 53
+	AuditTypeRedeemGiftCode        AuditType = 54
+	AuditTypeFileImported          AuditType = 55
+	AuditTypeUpdateView            AuditType = 56
+	AuditTypeDeleteDirectLink      AuditType = 57
+	AuditTypeReportAbuse           AuditType = 58
+	AuditTypeOAuthGrantCreate      AuditType = 59
+	AuditTypeOAuthTokenExchange    AuditType = 60
+	AuditTypeOAuthGrantRevoke      AuditType = 61
 )

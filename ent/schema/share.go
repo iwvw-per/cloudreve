@@ -42,6 +42,8 @@ func (Share) Edges() []ent.Edge {
 			Ref("shares").Unique(),
 		edge.From("file", File.Type).
 			Ref("shares").Unique(),
+		edge.To("events", Event.Type),
+		edge.To("abuse_reports", AbuseReport.Type),
 	}
 }
 

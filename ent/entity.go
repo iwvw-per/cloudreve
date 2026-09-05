@@ -58,9 +58,11 @@ type EntityEdges struct {
 	User *User `json:"user,omitempty"`
 	// StoragePolicy holds the value of the storage_policy edge.
 	StoragePolicy *StoragePolicy `json:"storage_policy,omitempty"`
+	// Events holds the value of the events edge.
+	Events []*Event `json:"events,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // FileOrErr returns the File value or an error if the edge
@@ -96,6 +98,15 @@ func (e EntityEdges) StoragePolicyOrErr() (*StoragePolicy, error) {
 		return e.StoragePolicy, nil
 	}
 	return nil, &NotLoadedError{edge: "storage_policy"}
+}
+
+// EventsOrErr returns the Events value or an error if the edge
+// was not loaded in eager-loading.
+func (e EntityEdges) EventsOrErr() ([]*Event, error) {
+	if e.loadedTypes[3] {
+		return e.Events, nil
+	}
+	return nil, &NotLoadedError{edge: "events"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -232,6 +243,11 @@ func (e *Entity) QueryStoragePolicy() *StoragePolicyQuery {
 	return NewEntityClient(e.config).QueryStoragePolicy(e)
 }
 
+// QueryEvents queries the "events" edge of the Entity entity.
+func (e *Entity) QueryEvents() *EventQuery {
+	return NewEntityClient(e.config).QueryEvents(e)
+}
+
 // Update returns a builder for updating this Entity.
 // Note that you need to call Entity.Unwrap() before calling this method if this Entity
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -311,6 +327,12 @@ func (e *Entity) SetUser(v *User) {
 func (e *Entity) SetStoragePolicy(v *StoragePolicy) {
 	e.Edges.StoragePolicy = v
 	e.Edges.loadedTypes[2] = true
+}
+
+// SetEvents manually set the edge as loaded state.
+func (e *Entity) SetEvents(v []*Event) {
+	e.Edges.Events = v
+	e.Edges.loadedTypes[3] = true
 }
 
 // Entities is a parsable slice of Entity.

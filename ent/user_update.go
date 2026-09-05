@@ -11,12 +11,16 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/cloudreve/Cloudreve/v4/ent/abusereport"
 	"github.com/cloudreve/Cloudreve/v4/ent/davaccount"
 	"github.com/cloudreve/Cloudreve/v4/ent/entity"
+	"github.com/cloudreve/Cloudreve/v4/ent/event"
 	"github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/ent/fsevent"
+	"github.com/cloudreve/Cloudreve/v4/ent/giftcode"
 	"github.com/cloudreve/Cloudreve/v4/ent/group"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
+	"github.com/cloudreve/Cloudreve/v4/ent/order"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
@@ -213,6 +217,27 @@ func (uu *UserUpdate) SetNillableGroupUsers(i *int) *UserUpdate {
 	return uu
 }
 
+// SetCredit sets the "credit" field.
+func (uu *UserUpdate) SetCredit(i int) *UserUpdate {
+	uu.mutation.ResetCredit()
+	uu.mutation.SetCredit(i)
+	return uu
+}
+
+// SetNillableCredit sets the "credit" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableCredit(i *int) *UserUpdate {
+	if i != nil {
+		uu.SetCredit(*i)
+	}
+	return uu
+}
+
+// AddCredit adds i to the "credit" field.
+func (uu *UserUpdate) AddCredit(i int) *UserUpdate {
+	uu.mutation.AddCredit(i)
+	return uu
+}
+
 // SetGroupID sets the "group" edge to the Group entity by ID.
 func (uu *UserUpdate) SetGroupID(id int) *UserUpdate {
 	uu.mutation.SetGroupID(id)
@@ -342,6 +367,81 @@ func (uu *UserUpdate) AddOauthGrants(o ...*OAuthGrant) *UserUpdate {
 		ids[i] = o[i].ID
 	}
 	return uu.AddOauthGrantIDs(ids...)
+}
+
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
+func (uu *UserUpdate) AddEventIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddEventIDs(ids...)
+	return uu
+}
+
+// AddEvents adds the "events" edges to the Event entity.
+func (uu *UserUpdate) AddEvents(e ...*Event) *UserUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uu.AddEventIDs(ids...)
+}
+
+// AddOrderIDs adds the "orders" edge to the Order entity by IDs.
+func (uu *UserUpdate) AddOrderIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddOrderIDs(ids...)
+	return uu
+}
+
+// AddOrders adds the "orders" edges to the Order entity.
+func (uu *UserUpdate) AddOrders(o ...*Order) *UserUpdate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uu.AddOrderIDs(ids...)
+}
+
+// AddGiftCodeIDs adds the "gift_codes" edge to the GiftCode entity by IDs.
+func (uu *UserUpdate) AddGiftCodeIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddGiftCodeIDs(ids...)
+	return uu
+}
+
+// AddGiftCodes adds the "gift_codes" edges to the GiftCode entity.
+func (uu *UserUpdate) AddGiftCodes(g ...*GiftCode) *UserUpdate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uu.AddGiftCodeIDs(ids...)
+}
+
+// AddAbuseReportsMadeIDs adds the "abuse_reports_made" edge to the AbuseReport entity by IDs.
+func (uu *UserUpdate) AddAbuseReportsMadeIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddAbuseReportsMadeIDs(ids...)
+	return uu
+}
+
+// AddAbuseReportsMade adds the "abuse_reports_made" edges to the AbuseReport entity.
+func (uu *UserUpdate) AddAbuseReportsMade(a ...*AbuseReport) *UserUpdate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uu.AddAbuseReportsMadeIDs(ids...)
+}
+
+// AddAbuseReportsReceivedIDs adds the "abuse_reports_received" edge to the AbuseReport entity by IDs.
+func (uu *UserUpdate) AddAbuseReportsReceivedIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddAbuseReportsReceivedIDs(ids...)
+	return uu
+}
+
+// AddAbuseReportsReceived adds the "abuse_reports_received" edges to the AbuseReport entity.
+func (uu *UserUpdate) AddAbuseReportsReceived(a ...*AbuseReport) *UserUpdate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uu.AddAbuseReportsReceivedIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -523,6 +623,111 @@ func (uu *UserUpdate) RemoveOauthGrants(o ...*OAuthGrant) *UserUpdate {
 	return uu.RemoveOauthGrantIDs(ids...)
 }
 
+// ClearEvents clears all "events" edges to the Event entity.
+func (uu *UserUpdate) ClearEvents() *UserUpdate {
+	uu.mutation.ClearEvents()
+	return uu
+}
+
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
+func (uu *UserUpdate) RemoveEventIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveEventIDs(ids...)
+	return uu
+}
+
+// RemoveEvents removes "events" edges to Event entities.
+func (uu *UserUpdate) RemoveEvents(e ...*Event) *UserUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uu.RemoveEventIDs(ids...)
+}
+
+// ClearOrders clears all "orders" edges to the Order entity.
+func (uu *UserUpdate) ClearOrders() *UserUpdate {
+	uu.mutation.ClearOrders()
+	return uu
+}
+
+// RemoveOrderIDs removes the "orders" edge to Order entities by IDs.
+func (uu *UserUpdate) RemoveOrderIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveOrderIDs(ids...)
+	return uu
+}
+
+// RemoveOrders removes "orders" edges to Order entities.
+func (uu *UserUpdate) RemoveOrders(o ...*Order) *UserUpdate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uu.RemoveOrderIDs(ids...)
+}
+
+// ClearGiftCodes clears all "gift_codes" edges to the GiftCode entity.
+func (uu *UserUpdate) ClearGiftCodes() *UserUpdate {
+	uu.mutation.ClearGiftCodes()
+	return uu
+}
+
+// RemoveGiftCodeIDs removes the "gift_codes" edge to GiftCode entities by IDs.
+func (uu *UserUpdate) RemoveGiftCodeIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveGiftCodeIDs(ids...)
+	return uu
+}
+
+// RemoveGiftCodes removes "gift_codes" edges to GiftCode entities.
+func (uu *UserUpdate) RemoveGiftCodes(g ...*GiftCode) *UserUpdate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uu.RemoveGiftCodeIDs(ids...)
+}
+
+// ClearAbuseReportsMade clears all "abuse_reports_made" edges to the AbuseReport entity.
+func (uu *UserUpdate) ClearAbuseReportsMade() *UserUpdate {
+	uu.mutation.ClearAbuseReportsMade()
+	return uu
+}
+
+// RemoveAbuseReportsMadeIDs removes the "abuse_reports_made" edge to AbuseReport entities by IDs.
+func (uu *UserUpdate) RemoveAbuseReportsMadeIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveAbuseReportsMadeIDs(ids...)
+	return uu
+}
+
+// RemoveAbuseReportsMade removes "abuse_reports_made" edges to AbuseReport entities.
+func (uu *UserUpdate) RemoveAbuseReportsMade(a ...*AbuseReport) *UserUpdate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uu.RemoveAbuseReportsMadeIDs(ids...)
+}
+
+// ClearAbuseReportsReceived clears all "abuse_reports_received" edges to the AbuseReport entity.
+func (uu *UserUpdate) ClearAbuseReportsReceived() *UserUpdate {
+	uu.mutation.ClearAbuseReportsReceived()
+	return uu
+}
+
+// RemoveAbuseReportsReceivedIDs removes the "abuse_reports_received" edge to AbuseReport entities by IDs.
+func (uu *UserUpdate) RemoveAbuseReportsReceivedIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveAbuseReportsReceivedIDs(ids...)
+	return uu
+}
+
+// RemoveAbuseReportsReceived removes "abuse_reports_received" edges to AbuseReport entities.
+func (uu *UserUpdate) RemoveAbuseReportsReceived(a ...*AbuseReport) *UserUpdate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uu.RemoveAbuseReportsReceivedIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
 	if err := uu.defaults(); err != nil {
@@ -647,6 +852,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.SettingsCleared() {
 		_spec.ClearField(user.FieldSettings, field.TypeJSON)
+	}
+	if value, ok := uu.mutation.Credit(); ok {
+		_spec.SetField(user.FieldCredit, field.TypeInt, value)
+	}
+	if value, ok := uu.mutation.AddedCredit(); ok {
+		_spec.AddField(user.FieldCredit, field.TypeInt, value)
 	}
 	if uu.mutation.GroupCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1037,6 +1248,231 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedEventsIDs(); len(nodes) > 0 && !uu.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.OrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OrdersTable,
+			Columns: []string{user.OrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedOrdersIDs(); len(nodes) > 0 && !uu.mutation.OrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OrdersTable,
+			Columns: []string{user.OrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.OrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OrdersTable,
+			Columns: []string{user.OrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.GiftCodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.GiftCodesTable,
+			Columns: []string{user.GiftCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(giftcode.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedGiftCodesIDs(); len(nodes) > 0 && !uu.mutation.GiftCodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.GiftCodesTable,
+			Columns: []string{user.GiftCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(giftcode.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.GiftCodesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.GiftCodesTable,
+			Columns: []string{user.GiftCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(giftcode.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.AbuseReportsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsMadeTable,
+			Columns: []string{user.AbuseReportsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedAbuseReportsMadeIDs(); len(nodes) > 0 && !uu.mutation.AbuseReportsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsMadeTable,
+			Columns: []string{user.AbuseReportsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.AbuseReportsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsMadeTable,
+			Columns: []string{user.AbuseReportsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.AbuseReportsReceivedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsReceivedTable,
+			Columns: []string{user.AbuseReportsReceivedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedAbuseReportsReceivedIDs(); len(nodes) > 0 && !uu.mutation.AbuseReportsReceivedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsReceivedTable,
+			Columns: []string{user.AbuseReportsReceivedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.AbuseReportsReceivedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsReceivedTable,
+			Columns: []string{user.AbuseReportsReceivedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -1232,6 +1668,27 @@ func (uuo *UserUpdateOne) SetNillableGroupUsers(i *int) *UserUpdateOne {
 	return uuo
 }
 
+// SetCredit sets the "credit" field.
+func (uuo *UserUpdateOne) SetCredit(i int) *UserUpdateOne {
+	uuo.mutation.ResetCredit()
+	uuo.mutation.SetCredit(i)
+	return uuo
+}
+
+// SetNillableCredit sets the "credit" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableCredit(i *int) *UserUpdateOne {
+	if i != nil {
+		uuo.SetCredit(*i)
+	}
+	return uuo
+}
+
+// AddCredit adds i to the "credit" field.
+func (uuo *UserUpdateOne) AddCredit(i int) *UserUpdateOne {
+	uuo.mutation.AddCredit(i)
+	return uuo
+}
+
 // SetGroupID sets the "group" edge to the Group entity by ID.
 func (uuo *UserUpdateOne) SetGroupID(id int) *UserUpdateOne {
 	uuo.mutation.SetGroupID(id)
@@ -1361,6 +1818,81 @@ func (uuo *UserUpdateOne) AddOauthGrants(o ...*OAuthGrant) *UserUpdateOne {
 		ids[i] = o[i].ID
 	}
 	return uuo.AddOauthGrantIDs(ids...)
+}
+
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
+func (uuo *UserUpdateOne) AddEventIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddEventIDs(ids...)
+	return uuo
+}
+
+// AddEvents adds the "events" edges to the Event entity.
+func (uuo *UserUpdateOne) AddEvents(e ...*Event) *UserUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uuo.AddEventIDs(ids...)
+}
+
+// AddOrderIDs adds the "orders" edge to the Order entity by IDs.
+func (uuo *UserUpdateOne) AddOrderIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddOrderIDs(ids...)
+	return uuo
+}
+
+// AddOrders adds the "orders" edges to the Order entity.
+func (uuo *UserUpdateOne) AddOrders(o ...*Order) *UserUpdateOne {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uuo.AddOrderIDs(ids...)
+}
+
+// AddGiftCodeIDs adds the "gift_codes" edge to the GiftCode entity by IDs.
+func (uuo *UserUpdateOne) AddGiftCodeIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddGiftCodeIDs(ids...)
+	return uuo
+}
+
+// AddGiftCodes adds the "gift_codes" edges to the GiftCode entity.
+func (uuo *UserUpdateOne) AddGiftCodes(g ...*GiftCode) *UserUpdateOne {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uuo.AddGiftCodeIDs(ids...)
+}
+
+// AddAbuseReportsMadeIDs adds the "abuse_reports_made" edge to the AbuseReport entity by IDs.
+func (uuo *UserUpdateOne) AddAbuseReportsMadeIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddAbuseReportsMadeIDs(ids...)
+	return uuo
+}
+
+// AddAbuseReportsMade adds the "abuse_reports_made" edges to the AbuseReport entity.
+func (uuo *UserUpdateOne) AddAbuseReportsMade(a ...*AbuseReport) *UserUpdateOne {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uuo.AddAbuseReportsMadeIDs(ids...)
+}
+
+// AddAbuseReportsReceivedIDs adds the "abuse_reports_received" edge to the AbuseReport entity by IDs.
+func (uuo *UserUpdateOne) AddAbuseReportsReceivedIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddAbuseReportsReceivedIDs(ids...)
+	return uuo
+}
+
+// AddAbuseReportsReceived adds the "abuse_reports_received" edges to the AbuseReport entity.
+func (uuo *UserUpdateOne) AddAbuseReportsReceived(a ...*AbuseReport) *UserUpdateOne {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uuo.AddAbuseReportsReceivedIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -1542,6 +2074,111 @@ func (uuo *UserUpdateOne) RemoveOauthGrants(o ...*OAuthGrant) *UserUpdateOne {
 	return uuo.RemoveOauthGrantIDs(ids...)
 }
 
+// ClearEvents clears all "events" edges to the Event entity.
+func (uuo *UserUpdateOne) ClearEvents() *UserUpdateOne {
+	uuo.mutation.ClearEvents()
+	return uuo
+}
+
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
+func (uuo *UserUpdateOne) RemoveEventIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveEventIDs(ids...)
+	return uuo
+}
+
+// RemoveEvents removes "events" edges to Event entities.
+func (uuo *UserUpdateOne) RemoveEvents(e ...*Event) *UserUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uuo.RemoveEventIDs(ids...)
+}
+
+// ClearOrders clears all "orders" edges to the Order entity.
+func (uuo *UserUpdateOne) ClearOrders() *UserUpdateOne {
+	uuo.mutation.ClearOrders()
+	return uuo
+}
+
+// RemoveOrderIDs removes the "orders" edge to Order entities by IDs.
+func (uuo *UserUpdateOne) RemoveOrderIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveOrderIDs(ids...)
+	return uuo
+}
+
+// RemoveOrders removes "orders" edges to Order entities.
+func (uuo *UserUpdateOne) RemoveOrders(o ...*Order) *UserUpdateOne {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uuo.RemoveOrderIDs(ids...)
+}
+
+// ClearGiftCodes clears all "gift_codes" edges to the GiftCode entity.
+func (uuo *UserUpdateOne) ClearGiftCodes() *UserUpdateOne {
+	uuo.mutation.ClearGiftCodes()
+	return uuo
+}
+
+// RemoveGiftCodeIDs removes the "gift_codes" edge to GiftCode entities by IDs.
+func (uuo *UserUpdateOne) RemoveGiftCodeIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveGiftCodeIDs(ids...)
+	return uuo
+}
+
+// RemoveGiftCodes removes "gift_codes" edges to GiftCode entities.
+func (uuo *UserUpdateOne) RemoveGiftCodes(g ...*GiftCode) *UserUpdateOne {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uuo.RemoveGiftCodeIDs(ids...)
+}
+
+// ClearAbuseReportsMade clears all "abuse_reports_made" edges to the AbuseReport entity.
+func (uuo *UserUpdateOne) ClearAbuseReportsMade() *UserUpdateOne {
+	uuo.mutation.ClearAbuseReportsMade()
+	return uuo
+}
+
+// RemoveAbuseReportsMadeIDs removes the "abuse_reports_made" edge to AbuseReport entities by IDs.
+func (uuo *UserUpdateOne) RemoveAbuseReportsMadeIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveAbuseReportsMadeIDs(ids...)
+	return uuo
+}
+
+// RemoveAbuseReportsMade removes "abuse_reports_made" edges to AbuseReport entities.
+func (uuo *UserUpdateOne) RemoveAbuseReportsMade(a ...*AbuseReport) *UserUpdateOne {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uuo.RemoveAbuseReportsMadeIDs(ids...)
+}
+
+// ClearAbuseReportsReceived clears all "abuse_reports_received" edges to the AbuseReport entity.
+func (uuo *UserUpdateOne) ClearAbuseReportsReceived() *UserUpdateOne {
+	uuo.mutation.ClearAbuseReportsReceived()
+	return uuo
+}
+
+// RemoveAbuseReportsReceivedIDs removes the "abuse_reports_received" edge to AbuseReport entities by IDs.
+func (uuo *UserUpdateOne) RemoveAbuseReportsReceivedIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveAbuseReportsReceivedIDs(ids...)
+	return uuo
+}
+
+// RemoveAbuseReportsReceived removes "abuse_reports_received" edges to AbuseReport entities.
+func (uuo *UserUpdateOne) RemoveAbuseReportsReceived(a ...*AbuseReport) *UserUpdateOne {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uuo.RemoveAbuseReportsReceivedIDs(ids...)
+}
+
 // Where appends a list predicates to the UserUpdate builder.
 func (uuo *UserUpdateOne) Where(ps ...predicate.User) *UserUpdateOne {
 	uuo.mutation.Where(ps...)
@@ -1696,6 +2333,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.SettingsCleared() {
 		_spec.ClearField(user.FieldSettings, field.TypeJSON)
+	}
+	if value, ok := uuo.mutation.Credit(); ok {
+		_spec.SetField(user.FieldCredit, field.TypeInt, value)
+	}
+	if value, ok := uuo.mutation.AddedCredit(); ok {
+		_spec.AddField(user.FieldCredit, field.TypeInt, value)
 	}
 	if uuo.mutation.GroupCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -2079,6 +2722,231 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(oauthgrant.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedEventsIDs(); len(nodes) > 0 && !uuo.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.OrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OrdersTable,
+			Columns: []string{user.OrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedOrdersIDs(); len(nodes) > 0 && !uuo.mutation.OrdersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OrdersTable,
+			Columns: []string{user.OrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.OrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OrdersTable,
+			Columns: []string{user.OrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.GiftCodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.GiftCodesTable,
+			Columns: []string{user.GiftCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(giftcode.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedGiftCodesIDs(); len(nodes) > 0 && !uuo.mutation.GiftCodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.GiftCodesTable,
+			Columns: []string{user.GiftCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(giftcode.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.GiftCodesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.GiftCodesTable,
+			Columns: []string{user.GiftCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(giftcode.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.AbuseReportsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsMadeTable,
+			Columns: []string{user.AbuseReportsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedAbuseReportsMadeIDs(); len(nodes) > 0 && !uuo.mutation.AbuseReportsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsMadeTable,
+			Columns: []string{user.AbuseReportsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.AbuseReportsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsMadeTable,
+			Columns: []string{user.AbuseReportsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.AbuseReportsReceivedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsReceivedTable,
+			Columns: []string{user.AbuseReportsReceivedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedAbuseReportsReceivedIDs(); len(nodes) > 0 && !uuo.mutation.AbuseReportsReceivedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsReceivedTable,
+			Columns: []string{user.AbuseReportsReceivedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.AbuseReportsReceivedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsReceivedTable,
+			Columns: []string{user.AbuseReportsReceivedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -273,6 +273,8 @@ type FileResponse struct {
 	Owned         bool                `json:"owned,omitempty"`
 	PrimaryEntity string              `json:"primary_entity,omitempty"`
 
+	Permissions *types.FileAccessRule `json:"permissions,omitempty"`
+
 	FolderSummary *fs.FolderSummary `json:"folder_summary,omitempty"`
 	ExtendedInfo  *ExtendedInfo     `json:"extended_info,omitempty"`
 }
@@ -339,6 +341,14 @@ type Share struct {
 	Password  string `json:"password,omitempty"`
 	ShareView bool   `json:"share_view,omitempty"`
 
+	// 分享写协作与定价
+	Price                int  `json:"price,omitempty"`
+	AllowUpload          bool `json:"allow_upload,omitempty"`
+	AllowModify          bool `json:"allow_modify,omitempty"`
+	AllowDelete          bool `json:"allow_delete,omitempty"`
+	AllowAnonymousUpload bool `json:"allow_anonymous_upload,omitempty"`
+	Purchased            bool `json:"purchased,omitempty"`
+
 	// Only viewable if explicitly unlocked by owner
 	SourceUri string `json:"source_uri,omitempty"`
 }
@@ -377,6 +387,19 @@ func BuildShare(ctx context.Context, s *ent.Share, base *url.URL, hasher hashid.
 	if requester.ID == owner.ID {
 		res.IsPrivate = s.Password != ""
 		res.ShareView = s.Props != nil && s.Props.ShareView
+	}
+
+	if s.Props != nil {
+		res.Price = s.Props.Price
+		res.AllowUpload = s.Props.AllowUpload
+		res.AllowModify = s.Props.AllowModify
+		res.AllowDelete = s.Props.AllowDelete
+		res.AllowAnonymousUpload = s.Props.AllowAnonymousUpload
+	}
+
+	if requester != nil && !inventory.IsAnonymousUser(requester) && requester.ID != owner.ID &&
+		s.Props != nil && s.Props.Price > 0 {
+		res.Purchased = lo.Contains(s.Props.PurchasedUsers, requester.ID)
 	}
 
 	return &res
@@ -429,6 +452,9 @@ func BuildFileResponse(ctx context.Context, u *ent.User, f fs.File, hasher hashi
 		FolderSummary: f.FolderSummary(),
 		ExtendedInfo:  BuildExtendedInfo(ctx, u, f, hasher),
 		PrimaryEntity: hashid.EncodeEntityID(hasher, f.PrimaryEntityID()),
+	}
+	if props := filePropsOf(f); props != nil {
+		res.Permissions = props.Permissions
 	}
 	return res
 }

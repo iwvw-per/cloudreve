@@ -250,6 +250,36 @@ func (service *SingleStoragePolicyService) Get(c *gin.Context) (*GetStoragePolic
 	return res, nil
 }
 
+// validateLoadBalancePolicy validates the load_balance settings of the given
+// policy. All child policy IDs in settings.load_balancer.weights must exist,
+// weights must be non-negative, and a policy cannot reference itself.
+func validateLoadBalancePolicy(c *gin.Context, dep dependency.Dep, policy *ent.StoragePolicy) error {
+	if policy == nil || policy.Type != types.PolicyTypeLoadBalance ||
+		policy.Settings == nil || policy.Settings.LoadBalancer == nil {
+		return nil
+	}
+
+	weights := policy.Settings.LoadBalancer.Weights
+	if len(weights) == 0 {
+		return serializer.NewError(serializer.CodeParamErr, "Load balance policy requires at least one child policy", nil)
+	}
+
+	sc := dep.StoragePolicyClient()
+	for childID, w := range weights {
+		if w < 0 {
+			return serializer.NewError(serializer.CodeParamErr, fmt.Sprintf("Weight of child policy %d cannot be negative", childID), nil)
+		}
+		if childID == policy.ID {
+			return serializer.NewError(serializer.CodeParamErr, "Load balance policy cannot reference itself", nil)
+		}
+		if _, err := sc.GetPolicyByID(c, childID); err != nil {
+			return serializer.NewError(serializer.CodePolicyNotExist, fmt.Sprintf("Child policy %d does not exist", childID), nil)
+		}
+	}
+
+	return nil
+}
+
 type (
 	CreateStoragePolicyService struct {
 		Policy *ent.StoragePolicy `json:"policy" binding:"required"`
@@ -266,6 +296,9 @@ func (service *CreateStoragePolicyService) Create(c *gin.Context) (*GetStoragePo
 	}
 
 	service.Policy.ID = 0
+	if err := validateLoadBalancePolicy(c, dep, service.Policy); err != nil {
+		return nil, err
+	}
 	policy, err := storagePolicyClient.Upsert(c, service.Policy)
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeDBError, "Failed to create policy", err)
@@ -295,6 +328,9 @@ func (service *UpdateStoragePolicyService) Update(c *gin.Context) (*GetStoragePo
 	}
 
 	service.Policy.ID = idInt
+	if err := validateLoadBalancePolicy(c, dep, service.Policy); err != nil {
+		return nil, err
+	}
 
 	sc, tx, ctx, err := inventory.WithTx(c, storagePolicyClient)
 	if err != nil {

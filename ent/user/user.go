@@ -41,6 +41,8 @@ const (
 	FieldSettings = "settings"
 	// FieldGroupUsers holds the string denoting the group_users field in the database.
 	FieldGroupUsers = "group_users"
+	// FieldCredit holds the string denoting the credit field in the database.
+	FieldCredit = "credit"
 	// EdgeGroup holds the string denoting the group edge name in mutations.
 	EdgeGroup = "group"
 	// EdgeFiles holds the string denoting the files edge name in mutations.
@@ -59,6 +61,16 @@ const (
 	EdgeEntities = "entities"
 	// EdgeOauthGrants holds the string denoting the oauth_grants edge name in mutations.
 	EdgeOauthGrants = "oauth_grants"
+	// EdgeEvents holds the string denoting the events edge name in mutations.
+	EdgeEvents = "events"
+	// EdgeOrders holds the string denoting the orders edge name in mutations.
+	EdgeOrders = "orders"
+	// EdgeGiftCodes holds the string denoting the gift_codes edge name in mutations.
+	EdgeGiftCodes = "gift_codes"
+	// EdgeAbuseReportsMade holds the string denoting the abuse_reports_made edge name in mutations.
+	EdgeAbuseReportsMade = "abuse_reports_made"
+	// EdgeAbuseReportsReceived holds the string denoting the abuse_reports_received edge name in mutations.
+	EdgeAbuseReportsReceived = "abuse_reports_received"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// GroupTable is the table that holds the group relation/edge.
@@ -124,6 +136,41 @@ const (
 	OauthGrantsInverseTable = "oauth_grants"
 	// OauthGrantsColumn is the table column denoting the oauth_grants relation/edge.
 	OauthGrantsColumn = "user_id"
+	// EventsTable is the table that holds the events relation/edge.
+	EventsTable = "events"
+	// EventsInverseTable is the table name for the Event entity.
+	// It exists in this package in order to avoid circular dependency with the "event" package.
+	EventsInverseTable = "events"
+	// EventsColumn is the table column denoting the events relation/edge.
+	EventsColumn = "user_events"
+	// OrdersTable is the table that holds the orders relation/edge.
+	OrdersTable = "orders"
+	// OrdersInverseTable is the table name for the Order entity.
+	// It exists in this package in order to avoid circular dependency with the "order" package.
+	OrdersInverseTable = "orders"
+	// OrdersColumn is the table column denoting the orders relation/edge.
+	OrdersColumn = "user_orders"
+	// GiftCodesTable is the table that holds the gift_codes relation/edge.
+	GiftCodesTable = "gift_codes"
+	// GiftCodesInverseTable is the table name for the GiftCode entity.
+	// It exists in this package in order to avoid circular dependency with the "giftcode" package.
+	GiftCodesInverseTable = "gift_codes"
+	// GiftCodesColumn is the table column denoting the gift_codes relation/edge.
+	GiftCodesColumn = "user_codes"
+	// AbuseReportsMadeTable is the table that holds the abuse_reports_made relation/edge.
+	AbuseReportsMadeTable = "abuse_reports"
+	// AbuseReportsMadeInverseTable is the table name for the AbuseReport entity.
+	// It exists in this package in order to avoid circular dependency with the "abusereport" package.
+	AbuseReportsMadeInverseTable = "abuse_reports"
+	// AbuseReportsMadeColumn is the table column denoting the abuse_reports_made relation/edge.
+	AbuseReportsMadeColumn = "reporter_user"
+	// AbuseReportsReceivedTable is the table that holds the abuse_reports_received relation/edge.
+	AbuseReportsReceivedTable = "abuse_reports"
+	// AbuseReportsReceivedInverseTable is the table name for the AbuseReport entity.
+	// It exists in this package in order to avoid circular dependency with the "abusereport" package.
+	AbuseReportsReceivedInverseTable = "abuse_reports"
+	// AbuseReportsReceivedColumn is the table column denoting the abuse_reports_received relation/edge.
+	AbuseReportsReceivedColumn = "reported_user"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -141,6 +188,7 @@ var Columns = []string{
 	FieldAvatar,
 	FieldSettings,
 	FieldGroupUsers,
+	FieldCredit,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -175,6 +223,8 @@ var (
 	DefaultStorage int64
 	// DefaultSettings holds the default value on creation for the "settings" field.
 	DefaultSettings *types.UserSetting
+	// DefaultCredit holds the default value on creation for the "credit" field.
+	DefaultCredit int
 )
 
 // Status defines the type for the "status" enum field.
@@ -266,6 +316,11 @@ func ByAvatar(opts ...sql.OrderTermOption) OrderOption {
 // ByGroupUsers orders the results by the group_users field.
 func ByGroupUsers(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGroupUsers, opts...).ToFunc()
+}
+
+// ByCredit orders the results by the credit field.
+func ByCredit(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCredit, opts...).ToFunc()
 }
 
 // ByGroupField orders the results by group field.
@@ -386,6 +441,76 @@ func ByOauthGrants(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newOauthGrantsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEventsCount orders the results by events count.
+func ByEventsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEventsStep(), opts...)
+	}
+}
+
+// ByEvents orders the results by events terms.
+func ByEvents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEventsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByOrdersCount orders the results by orders count.
+func ByOrdersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOrdersStep(), opts...)
+	}
+}
+
+// ByOrders orders the results by orders terms.
+func ByOrders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOrdersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByGiftCodesCount orders the results by gift_codes count.
+func ByGiftCodesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newGiftCodesStep(), opts...)
+	}
+}
+
+// ByGiftCodes orders the results by gift_codes terms.
+func ByGiftCodes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newGiftCodesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByAbuseReportsMadeCount orders the results by abuse_reports_made count.
+func ByAbuseReportsMadeCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAbuseReportsMadeStep(), opts...)
+	}
+}
+
+// ByAbuseReportsMade orders the results by abuse_reports_made terms.
+func ByAbuseReportsMade(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAbuseReportsMadeStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByAbuseReportsReceivedCount orders the results by abuse_reports_received count.
+func ByAbuseReportsReceivedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAbuseReportsReceivedStep(), opts...)
+	}
+}
+
+// ByAbuseReportsReceived orders the results by abuse_reports_received terms.
+func ByAbuseReportsReceived(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAbuseReportsReceivedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newGroupStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -447,5 +572,40 @@ func newOauthGrantsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OauthGrantsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, OauthGrantsTable, OauthGrantsColumn),
+	)
+}
+func newEventsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EventsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EventsTable, EventsColumn),
+	)
+}
+func newOrdersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OrdersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, OrdersTable, OrdersColumn),
+	)
+}
+func newGiftCodesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(GiftCodesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, GiftCodesTable, GiftCodesColumn),
+	)
+}
+func newAbuseReportsMadeStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AbuseReportsMadeInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AbuseReportsMadeTable, AbuseReportsMadeColumn),
+	)
+}
+func newAbuseReportsReceivedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AbuseReportsReceivedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AbuseReportsReceivedTable, AbuseReportsReceivedColumn),
 	)
 }

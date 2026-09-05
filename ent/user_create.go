@@ -11,12 +11,16 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/cloudreve/Cloudreve/v4/ent/abusereport"
 	"github.com/cloudreve/Cloudreve/v4/ent/davaccount"
 	"github.com/cloudreve/Cloudreve/v4/ent/entity"
+	"github.com/cloudreve/Cloudreve/v4/ent/event"
 	"github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/ent/fsevent"
+	"github.com/cloudreve/Cloudreve/v4/ent/giftcode"
 	"github.com/cloudreve/Cloudreve/v4/ent/group"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
+	"github.com/cloudreve/Cloudreve/v4/ent/order"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
 	"github.com/cloudreve/Cloudreve/v4/ent/task"
@@ -168,6 +172,20 @@ func (uc *UserCreate) SetGroupUsers(i int) *UserCreate {
 	return uc
 }
 
+// SetCredit sets the "credit" field.
+func (uc *UserCreate) SetCredit(i int) *UserCreate {
+	uc.mutation.SetCredit(i)
+	return uc
+}
+
+// SetNillableCredit sets the "credit" field if the given value is not nil.
+func (uc *UserCreate) SetNillableCredit(i *int) *UserCreate {
+	if i != nil {
+		uc.SetCredit(*i)
+	}
+	return uc
+}
+
 // SetGroupID sets the "group" edge to the Group entity by ID.
 func (uc *UserCreate) SetGroupID(id int) *UserCreate {
 	uc.mutation.SetGroupID(id)
@@ -299,6 +317,81 @@ func (uc *UserCreate) AddOauthGrants(o ...*OAuthGrant) *UserCreate {
 	return uc.AddOauthGrantIDs(ids...)
 }
 
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
+func (uc *UserCreate) AddEventIDs(ids ...int) *UserCreate {
+	uc.mutation.AddEventIDs(ids...)
+	return uc
+}
+
+// AddEvents adds the "events" edges to the Event entity.
+func (uc *UserCreate) AddEvents(e ...*Event) *UserCreate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uc.AddEventIDs(ids...)
+}
+
+// AddOrderIDs adds the "orders" edge to the Order entity by IDs.
+func (uc *UserCreate) AddOrderIDs(ids ...int) *UserCreate {
+	uc.mutation.AddOrderIDs(ids...)
+	return uc
+}
+
+// AddOrders adds the "orders" edges to the Order entity.
+func (uc *UserCreate) AddOrders(o ...*Order) *UserCreate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uc.AddOrderIDs(ids...)
+}
+
+// AddGiftCodeIDs adds the "gift_codes" edge to the GiftCode entity by IDs.
+func (uc *UserCreate) AddGiftCodeIDs(ids ...int) *UserCreate {
+	uc.mutation.AddGiftCodeIDs(ids...)
+	return uc
+}
+
+// AddGiftCodes adds the "gift_codes" edges to the GiftCode entity.
+func (uc *UserCreate) AddGiftCodes(g ...*GiftCode) *UserCreate {
+	ids := make([]int, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uc.AddGiftCodeIDs(ids...)
+}
+
+// AddAbuseReportsMadeIDs adds the "abuse_reports_made" edge to the AbuseReport entity by IDs.
+func (uc *UserCreate) AddAbuseReportsMadeIDs(ids ...int) *UserCreate {
+	uc.mutation.AddAbuseReportsMadeIDs(ids...)
+	return uc
+}
+
+// AddAbuseReportsMade adds the "abuse_reports_made" edges to the AbuseReport entity.
+func (uc *UserCreate) AddAbuseReportsMade(a ...*AbuseReport) *UserCreate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uc.AddAbuseReportsMadeIDs(ids...)
+}
+
+// AddAbuseReportsReceivedIDs adds the "abuse_reports_received" edge to the AbuseReport entity by IDs.
+func (uc *UserCreate) AddAbuseReportsReceivedIDs(ids ...int) *UserCreate {
+	uc.mutation.AddAbuseReportsReceivedIDs(ids...)
+	return uc
+}
+
+// AddAbuseReportsReceived adds the "abuse_reports_received" edges to the AbuseReport entity.
+func (uc *UserCreate) AddAbuseReportsReceived(a ...*AbuseReport) *UserCreate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uc.AddAbuseReportsReceivedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uc *UserCreate) Mutation() *UserMutation {
 	return uc.mutation
@@ -362,6 +455,10 @@ func (uc *UserCreate) defaults() error {
 		v := user.DefaultSettings
 		uc.mutation.SetSettings(v)
 	}
+	if _, ok := uc.mutation.Credit(); !ok {
+		v := user.DefaultCredit
+		uc.mutation.SetCredit(v)
+	}
 	return nil
 }
 
@@ -402,6 +499,9 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.GroupUsers(); !ok {
 		return &ValidationError{Name: "group_users", err: errors.New(`ent: missing required field "User.group_users"`)}
+	}
+	if _, ok := uc.mutation.Credit(); !ok {
+		return &ValidationError{Name: "credit", err: errors.New(`ent: missing required field "User.credit"`)}
 	}
 	if _, ok := uc.mutation.GroupID(); !ok {
 		return &ValidationError{Name: "group", err: errors.New(`ent: missing required edge "User.group"`)}
@@ -483,6 +583,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Settings(); ok {
 		_spec.SetField(user.FieldSettings, field.TypeJSON, value)
 		_node.Settings = value
+	}
+	if value, ok := uc.mutation.Credit(); ok {
+		_spec.SetField(user.FieldCredit, field.TypeInt, value)
+		_node.Credit = value
 	}
 	if nodes := uc.mutation.GroupIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -622,6 +726,86 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(oauthgrant.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.OrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OrdersTable,
+			Columns: []string{user.OrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.GiftCodesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.GiftCodesTable,
+			Columns: []string{user.GiftCodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(giftcode.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.AbuseReportsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsMadeTable,
+			Columns: []string{user.AbuseReportsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.AbuseReportsReceivedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AbuseReportsReceivedTable,
+			Columns: []string{user.AbuseReportsReceivedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(abusereport.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -846,6 +1030,24 @@ func (u *UserUpsert) SetGroupUsers(v int) *UserUpsert {
 // UpdateGroupUsers sets the "group_users" field to the value that was provided on create.
 func (u *UserUpsert) UpdateGroupUsers() *UserUpsert {
 	u.SetExcluded(user.FieldGroupUsers)
+	return u
+}
+
+// SetCredit sets the "credit" field.
+func (u *UserUpsert) SetCredit(v int) *UserUpsert {
+	u.Set(user.FieldCredit, v)
+	return u
+}
+
+// UpdateCredit sets the "credit" field to the value that was provided on create.
+func (u *UserUpsert) UpdateCredit() *UserUpsert {
+	u.SetExcluded(user.FieldCredit)
+	return u
+}
+
+// AddCredit adds v to the "credit" field.
+func (u *UserUpsert) AddCredit(v int) *UserUpsert {
+	u.Add(user.FieldCredit, v)
 	return u
 }
 
@@ -1087,6 +1289,27 @@ func (u *UserUpsertOne) SetGroupUsers(v int) *UserUpsertOne {
 func (u *UserUpsertOne) UpdateGroupUsers() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateGroupUsers()
+	})
+}
+
+// SetCredit sets the "credit" field.
+func (u *UserUpsertOne) SetCredit(v int) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetCredit(v)
+	})
+}
+
+// AddCredit adds v to the "credit" field.
+func (u *UserUpsertOne) AddCredit(v int) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddCredit(v)
+	})
+}
+
+// UpdateCredit sets the "credit" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateCredit() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateCredit()
 	})
 }
 
@@ -1499,6 +1722,27 @@ func (u *UserUpsertBulk) SetGroupUsers(v int) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdateGroupUsers() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateGroupUsers()
+	})
+}
+
+// SetCredit sets the "credit" field.
+func (u *UserUpsertBulk) SetCredit(v int) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetCredit(v)
+	})
+}
+
+// AddCredit adds v to the "credit" field.
+func (u *UserUpsertBulk) AddCredit(v int) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddCredit(v)
+	})
+}
+
+// UpdateCredit sets the "credit" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateCredit() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateCredit()
 	})
 }
 

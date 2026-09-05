@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/cloudreve/Cloudreve/v4/ent/entity"
+	"github.com/cloudreve/Cloudreve/v4/ent/event"
 	"github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/ent/storagepolicy"
 	"github.com/cloudreve/Cloudreve/v4/ent/user"
@@ -184,6 +185,21 @@ func (ec *EntityCreate) SetStoragePolicyID(id int) *EntityCreate {
 // SetStoragePolicy sets the "storage_policy" edge to the StoragePolicy entity.
 func (ec *EntityCreate) SetStoragePolicy(s *StoragePolicy) *EntityCreate {
 	return ec.SetStoragePolicyID(s.ID)
+}
+
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
+func (ec *EntityCreate) AddEventIDs(ids ...int) *EntityCreate {
+	ec.mutation.AddEventIDs(ids...)
+	return ec
+}
+
+// AddEvents adds the "events" edges to the Event entity.
+func (ec *EntityCreate) AddEvents(e ...*Event) *EntityCreate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return ec.AddEventIDs(ids...)
 }
 
 // Mutation returns the EntityMutation object of the builder.
@@ -388,6 +404,22 @@ func (ec *EntityCreate) createSpec() (*Entity, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.StoragePolicyEntities = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   entity.EventsTable,
+			Columns: []string{entity.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(event.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -536,6 +536,52 @@ func HasFileWith(preds ...predicate.File) predicate.Share {
 	})
 }
 
+// HasEvents applies the HasEdge predicate on the "events" edge.
+func HasEvents() predicate.Share {
+	return predicate.Share(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EventsTable, EventsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEventsWith applies the HasEdge predicate on the "events" edge with a given conditions (other predicates).
+func HasEventsWith(preds ...predicate.Event) predicate.Share {
+	return predicate.Share(func(s *sql.Selector) {
+		step := newEventsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAbuseReports applies the HasEdge predicate on the "abuse_reports" edge.
+func HasAbuseReports() predicate.Share {
+	return predicate.Share(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AbuseReportsTable, AbuseReportsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAbuseReportsWith applies the HasEdge predicate on the "abuse_reports" edge with a given conditions (other predicates).
+func HasAbuseReportsWith(preds ...predicate.AbuseReport) predicate.Share {
+	return predicate.Share(func(s *sql.Selector) {
+		step := newAbuseReportsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Share) predicate.Share {
 	return predicate.Share(sql.AndPredicates(predicates...))

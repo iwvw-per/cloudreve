@@ -21,6 +21,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
 	"github.com/cloudreve/Cloudreve/v4/pkg/setting"
 	"github.com/cloudreve/Cloudreve/v4/pkg/util"
+	"github.com/cloudreve/Cloudreve/v4/service/admin"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 	"github.com/samber/lo"
@@ -116,6 +117,16 @@ func (s *GetDirectLinkService) Get(c *gin.Context) ([]DirectLinkResponse, error)
 		return nil, serializer.NewError(serializer.CodeParamErr, "unknown uri", err)
 	}
 
+	for _, uri := range uris {
+		target, err := m.Get(c, uri, dbfs.WithNotRoot())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get file for access check: %w", err)
+		}
+		if err := CheckFileAccess(c, target, u, FileAccessActionDownload); err != nil {
+			return nil, err
+		}
+	}
+
 	res, err := m.GetDirectLink(c, uris...)
 	return BuildDirectLinkResponse(res), err
 }
@@ -170,6 +181,15 @@ func (service *ListFileService) List(c *gin.Context) (*ListResponse, error) {
 	uri, err := fs.NewUriFromString(service.Uri)
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeParamErr, "unknown uri", err)
+	}
+
+	if uri.SearchParameters() == nil {
+		parentForCheck, err := m.Get(c, uri, dbfs.WithNotRoot())
+		if err == nil && parentForCheck != nil && !parentForCheck.IsNil() {
+			if err := CheckFileAccess(c, parentForCheck, user, FileAccessActionView); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	pageSize := service.PageSize
@@ -424,10 +444,6 @@ func (s *FileURLService) GetArchiveDownloadSession(c *gin.Context) (*FileURLResp
 }
 
 func (s *FileURLService) Get(c *gin.Context) (*FileURLResponse, error) {
-	if s.Archive {
-		return s.GetArchiveDownloadSession(c)
-	}
-
 	dep := dependency.FromContext(c)
 	settings := dep.SettingProvider()
 	user := inventory.UserFromContext(c)
@@ -437,6 +453,30 @@ func (s *FileURLService) Get(c *gin.Context) (*FileURLResponse, error) {
 	uris, err := fs.NewUriFromStrings(s.Uris...)
 	if err != nil {
 		return nil, serializer.NewError(serializer.CodeParamErr, "unknown uri", err)
+	}
+
+	accessAction := FileAccessActionView
+	if s.Download {
+		accessAction = FileAccessActionDownload
+	}
+	for _, uri := range uris {
+		target, err := m.Get(c, uri, dbfs.WithNotRoot())
+		if err != nil {
+			if s.SkipError {
+				continue
+			}
+			return nil, fmt.Errorf("failed to get file for access check: %w", err)
+		}
+		if err := CheckFileAccess(c, target, user, accessAction); err != nil {
+			if s.SkipError {
+				continue
+			}
+			return nil, err
+		}
+	}
+
+	if s.Archive {
+		return s.GetArchiveDownloadSession(c)
 	}
 
 	// Request entity URL
@@ -505,6 +545,14 @@ func (s *FileThumbService) Get(c *gin.Context) (*FileThumbResponse, error) {
 		return nil, serializer.NewError(serializer.CodeParamErr, "unknown uri", err)
 	}
 
+	target, err := m.Get(c, uri, dbfs.WithNotRoot())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file for access check: %w", err)
+	}
+	if err := CheckFileAccess(c, target, user, FileAccessActionView); err != nil {
+		return nil, err
+	}
+
 	// Get thumbnail
 	thumb, err := m.Thumbnail(c, uri)
 	if err != nil {
@@ -555,6 +603,14 @@ func (s *DeleteFileService) Delete(c *gin.Context) error {
 	if err = m.Delete(c, uris, fs.WithUnlinkOnly(s.UnlinkOnly), fs.WithSkipSoftDelete(s.SkipSoftDelete)); err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)
 	}
+
+	admin.RecordEvent(c, &inventory.CreateEventParams{
+		Type:   types.AuditTypeDeleteFile,
+		UserID: user.ID,
+		Content: &types.AuditContent{
+			OriginalName: s.Uris[0],
+		},
+	})
 
 	return nil
 }
@@ -668,6 +724,10 @@ func (s *GetFileInfoService) Get(c *gin.Context) (*FileResponse, error) {
 
 	if file == nil {
 		return nil, serializer.NewError(serializer.CodeNotFound, "file not found", nil)
+	}
+
+	if err := CheckFileAccess(c, file, user, FileAccessActionView); err != nil {
+		return nil, err
 	}
 
 	return BuildFileResponse(c, user, file, dep.HashIDEncoder(), nil), nil

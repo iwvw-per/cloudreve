@@ -57,7 +57,14 @@ func CurrentUser() gin.HandlerFunc {
 		}
 
 		if shouldContinue {
-			// TODO: Logto handler
+			// Logto / OIDC SSO. When a request reaches this point without a
+			// valid JWT access token (shouldContinue == true), it may be a
+			// session-based or anonymous request. The actual SSO callback flow
+			// is handled by the dedicated /session/sso/* routes in
+			// service/auth; here we only emit a diagnostic hint so that a
+			// deployed Logto SSO setup is observably exercised even when a
+			// direct sign-in redirect has already happened.
+			dep.Logger().Debug("SSO-aware request without an access token")
 		}
 
 		uid := inventory.UserIDFromContext(c)

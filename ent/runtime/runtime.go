@@ -5,17 +5,22 @@ package runtime
 import (
 	"time"
 
+	"github.com/cloudreve/Cloudreve/v4/ent/abusereport"
 	"github.com/cloudreve/Cloudreve/v4/ent/davaccount"
 	"github.com/cloudreve/Cloudreve/v4/ent/directlink"
 	"github.com/cloudreve/Cloudreve/v4/ent/entity"
+	"github.com/cloudreve/Cloudreve/v4/ent/event"
 	"github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/ent/fsevent"
+	"github.com/cloudreve/Cloudreve/v4/ent/giftcode"
 	"github.com/cloudreve/Cloudreve/v4/ent/group"
 	"github.com/cloudreve/Cloudreve/v4/ent/metadata"
 	"github.com/cloudreve/Cloudreve/v4/ent/node"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthclient"
 	"github.com/cloudreve/Cloudreve/v4/ent/oauthgrant"
+	"github.com/cloudreve/Cloudreve/v4/ent/order"
 	"github.com/cloudreve/Cloudreve/v4/ent/passkey"
+	"github.com/cloudreve/Cloudreve/v4/ent/product"
 	"github.com/cloudreve/Cloudreve/v4/ent/schema"
 	"github.com/cloudreve/Cloudreve/v4/ent/setting"
 	"github.com/cloudreve/Cloudreve/v4/ent/share"
@@ -29,6 +34,25 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	abusereportMixin := schema.AbuseReport{}.Mixin()
+	abusereportMixinHooks0 := abusereportMixin[0].Hooks()
+	abusereport.Hooks[0] = abusereportMixinHooks0[0]
+	abusereportMixinInters0 := abusereportMixin[0].Interceptors()
+	abusereport.Interceptors[0] = abusereportMixinInters0[0]
+	abusereportMixinFields0 := abusereportMixin[0].Fields()
+	_ = abusereportMixinFields0
+	abusereportFields := schema.AbuseReport{}.Fields()
+	_ = abusereportFields
+	// abusereportDescCreatedAt is the schema descriptor for created_at field.
+	abusereportDescCreatedAt := abusereportMixinFields0[0].Descriptor()
+	// abusereport.DefaultCreatedAt holds the default value on creation for the created_at field.
+	abusereport.DefaultCreatedAt = abusereportDescCreatedAt.Default.(func() time.Time)
+	// abusereportDescUpdatedAt is the schema descriptor for updated_at field.
+	abusereportDescUpdatedAt := abusereportMixinFields0[1].Descriptor()
+	// abusereport.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	abusereport.DefaultUpdatedAt = abusereportDescUpdatedAt.Default.(func() time.Time)
+	// abusereport.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	abusereport.UpdateDefaultUpdatedAt = abusereportDescUpdatedAt.UpdateDefault.(func() time.Time)
 	davaccountMixin := schema.DavAccount{}.Mixin()
 	davaccountMixinHooks0 := davaccountMixin[0].Hooks()
 	davaccount.Hooks[0] = davaccountMixinHooks0[0]
@@ -90,6 +114,37 @@ func init() {
 	entityDescReferenceCount := entityFields[3].Descriptor()
 	// entity.DefaultReferenceCount holds the default value on creation for the reference_count field.
 	entity.DefaultReferenceCount = entityDescReferenceCount.Default.(int)
+	eventMixin := schema.Event{}.Mixin()
+	eventMixinHooks0 := eventMixin[0].Hooks()
+	event.Hooks[0] = eventMixinHooks0[0]
+	eventMixinInters0 := eventMixin[0].Interceptors()
+	event.Interceptors[0] = eventMixinInters0[0]
+	eventMixinFields0 := eventMixin[0].Fields()
+	_ = eventMixinFields0
+	eventFields := schema.Event{}.Fields()
+	_ = eventFields
+	// eventDescCreatedAt is the schema descriptor for created_at field.
+	eventDescCreatedAt := eventMixinFields0[0].Descriptor()
+	// event.DefaultCreatedAt holds the default value on creation for the created_at field.
+	event.DefaultCreatedAt = eventDescCreatedAt.Default.(func() time.Time)
+	// eventDescUpdatedAt is the schema descriptor for updated_at field.
+	eventDescUpdatedAt := eventMixinFields0[1].Descriptor()
+	// event.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	event.DefaultUpdatedAt = eventDescUpdatedAt.Default.(func() time.Time)
+	// event.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	event.UpdateDefaultUpdatedAt = eventDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// eventDescCorrelationID is the schema descriptor for correlation_id field.
+	eventDescCorrelationID := eventFields[1].Descriptor()
+	// event.CorrelationIDValidator is a validator for the "correlation_id" field. It is called by the builders before save.
+	event.CorrelationIDValidator = eventDescCorrelationID.Validators[0].(func(string) error)
+	// eventDescIP is the schema descriptor for ip field.
+	eventDescIP := eventFields[2].Descriptor()
+	// event.IPValidator is a validator for the "ip" field. It is called by the builders before save.
+	event.IPValidator = eventDescIP.Validators[0].(func(string) error)
+	// eventDescUserAgent is the schema descriptor for user_agent field.
+	eventDescUserAgent := eventFields[3].Descriptor()
+	// event.UserAgentValidator is a validator for the "user_agent" field. It is called by the builders before save.
+	event.UserAgentValidator = eventDescUserAgent.Validators[0].(func(string) error)
 	fileHooks := schema.File{}.Hooks()
 	file.Hooks[0] = fileHooks[0]
 	fileFields := schema.File{}.Fields()
@@ -129,6 +184,29 @@ func init() {
 	fsevent.DefaultUpdatedAt = fseventDescUpdatedAt.Default.(func() time.Time)
 	// fsevent.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	fsevent.UpdateDefaultUpdatedAt = fseventDescUpdatedAt.UpdateDefault.(func() time.Time)
+	giftcodeMixin := schema.GiftCode{}.Mixin()
+	giftcodeMixinHooks0 := giftcodeMixin[0].Hooks()
+	giftcode.Hooks[0] = giftcodeMixinHooks0[0]
+	giftcodeMixinInters0 := giftcodeMixin[0].Interceptors()
+	giftcode.Interceptors[0] = giftcodeMixinInters0[0]
+	giftcodeMixinFields0 := giftcodeMixin[0].Fields()
+	_ = giftcodeMixinFields0
+	giftcodeFields := schema.GiftCode{}.Fields()
+	_ = giftcodeFields
+	// giftcodeDescCreatedAt is the schema descriptor for created_at field.
+	giftcodeDescCreatedAt := giftcodeMixinFields0[0].Descriptor()
+	// giftcode.DefaultCreatedAt holds the default value on creation for the created_at field.
+	giftcode.DefaultCreatedAt = giftcodeDescCreatedAt.Default.(func() time.Time)
+	// giftcodeDescUpdatedAt is the schema descriptor for updated_at field.
+	giftcodeDescUpdatedAt := giftcodeMixinFields0[1].Descriptor()
+	// giftcode.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	giftcode.DefaultUpdatedAt = giftcodeDescUpdatedAt.Default.(func() time.Time)
+	// giftcode.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	giftcode.UpdateDefaultUpdatedAt = giftcodeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// giftcodeDescProps is the schema descriptor for props field.
+	giftcodeDescProps := giftcodeFields[1].Descriptor()
+	// giftcode.DefaultProps holds the default value on creation for the props field.
+	giftcode.DefaultProps = giftcodeDescProps.Default.(*types.GiftCodeProps)
 	groupMixin := schema.Group{}.Mixin()
 	groupMixinHooks0 := groupMixin[0].Hooks()
 	group.Hooks[0] = groupMixinHooks0[0]
@@ -276,6 +354,29 @@ func init() {
 	oauthgrantDescScopes := oauthgrantFields[2].Descriptor()
 	// oauthgrant.DefaultScopes holds the default value on creation for the scopes field.
 	oauthgrant.DefaultScopes = oauthgrantDescScopes.Default.([]string)
+	orderMixin := schema.Order{}.Mixin()
+	orderMixinHooks0 := orderMixin[0].Hooks()
+	order.Hooks[0] = orderMixinHooks0[0]
+	orderMixinInters0 := orderMixin[0].Interceptors()
+	order.Interceptors[0] = orderMixinInters0[0]
+	orderMixinFields0 := orderMixin[0].Fields()
+	_ = orderMixinFields0
+	orderFields := schema.Order{}.Fields()
+	_ = orderFields
+	// orderDescCreatedAt is the schema descriptor for created_at field.
+	orderDescCreatedAt := orderMixinFields0[0].Descriptor()
+	// order.DefaultCreatedAt holds the default value on creation for the created_at field.
+	order.DefaultCreatedAt = orderDescCreatedAt.Default.(func() time.Time)
+	// orderDescUpdatedAt is the schema descriptor for updated_at field.
+	orderDescUpdatedAt := orderMixinFields0[1].Descriptor()
+	// order.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	order.DefaultUpdatedAt = orderDescUpdatedAt.Default.(func() time.Time)
+	// order.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	order.UpdateDefaultUpdatedAt = orderDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// orderDescQuantity is the schema descriptor for quantity field.
+	orderDescQuantity := orderFields[3].Descriptor()
+	// order.DefaultQuantity holds the default value on creation for the quantity field.
+	order.DefaultQuantity = orderDescQuantity.Default.(int)
 	passkeyMixin := schema.Passkey{}.Mixin()
 	passkeyMixinHooks0 := passkeyMixin[0].Hooks()
 	passkey.Hooks[0] = passkeyMixinHooks0[0]
@@ -295,6 +396,37 @@ func init() {
 	passkey.DefaultUpdatedAt = passkeyDescUpdatedAt.Default.(func() time.Time)
 	// passkey.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	passkey.UpdateDefaultUpdatedAt = passkeyDescUpdatedAt.UpdateDefault.(func() time.Time)
+	productMixin := schema.Product{}.Mixin()
+	productMixinHooks0 := productMixin[0].Hooks()
+	product.Hooks[0] = productMixinHooks0[0]
+	productMixinInters0 := productMixin[0].Interceptors()
+	product.Interceptors[0] = productMixinInters0[0]
+	productMixinFields0 := productMixin[0].Fields()
+	_ = productMixinFields0
+	productFields := schema.Product{}.Fields()
+	_ = productFields
+	// productDescCreatedAt is the schema descriptor for created_at field.
+	productDescCreatedAt := productMixinFields0[0].Descriptor()
+	// product.DefaultCreatedAt holds the default value on creation for the created_at field.
+	product.DefaultCreatedAt = productDescCreatedAt.Default.(func() time.Time)
+	// productDescUpdatedAt is the schema descriptor for updated_at field.
+	productDescUpdatedAt := productMixinFields0[1].Descriptor()
+	// product.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	product.DefaultUpdatedAt = productDescUpdatedAt.Default.(func() time.Time)
+	// product.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	product.UpdateDefaultUpdatedAt = productDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// productDescHighlight is the schema descriptor for highlight field.
+	productDescHighlight := productFields[3].Descriptor()
+	// product.DefaultHighlight holds the default value on creation for the highlight field.
+	product.DefaultHighlight = productDescHighlight.Default.(bool)
+	// productDescEnabled is the schema descriptor for enabled field.
+	productDescEnabled := productFields[4].Descriptor()
+	// product.DefaultEnabled holds the default value on creation for the enabled field.
+	product.DefaultEnabled = productDescEnabled.Default.(bool)
+	// productDescProps is the schema descriptor for props field.
+	productDescProps := productFields[5].Descriptor()
+	// product.DefaultProps holds the default value on creation for the props field.
+	product.DefaultProps = productDescProps.Default.(*types.ProductProps)
 	settingMixin := schema.Setting{}.Mixin()
 	settingMixinHooks0 := settingMixin[0].Hooks()
 	setting.Hooks[0] = settingMixinHooks0[0]
@@ -418,6 +550,10 @@ func init() {
 	userDescSettings := userFields[7].Descriptor()
 	// user.DefaultSettings holds the default value on creation for the settings field.
 	user.DefaultSettings = userDescSettings.Default.(*types.UserSetting)
+	// userDescCredit is the schema descriptor for credit field.
+	userDescCredit := userFields[9].Descriptor()
+	// user.DefaultCredit holds the default value on creation for the credit field.
+	user.DefaultCredit = userDescCredit.Default.(int)
 }
 
 const (

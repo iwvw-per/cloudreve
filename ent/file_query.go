@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/cloudreve/Cloudreve/v4/ent/directlink"
 	"github.com/cloudreve/Cloudreve/v4/ent/entity"
+	"github.com/cloudreve/Cloudreve/v4/ent/event"
 	"github.com/cloudreve/Cloudreve/v4/ent/file"
 	"github.com/cloudreve/Cloudreve/v4/ent/metadata"
 	"github.com/cloudreve/Cloudreve/v4/ent/predicate"
@@ -36,6 +37,7 @@ type FileQuery struct {
 	withEntities        *EntityQuery
 	withShares          *ShareQuery
 	withDirectLinks     *DirectLinkQuery
+	withEvents          *EventQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -248,6 +250,28 @@ func (fq *FileQuery) QueryDirectLinks() *DirectLinkQuery {
 	return query
 }
 
+// QueryEvents chains the current query on the "events" edge.
+func (fq *FileQuery) QueryEvents() *EventQuery {
+	query := (&EventClient{config: fq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := fq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := fq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(file.Table, file.FieldID, selector),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, file.EventsTable, file.EventsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(fq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first File entity from the query.
 // Returns a *NotFoundError when no File was found.
 func (fq *FileQuery) First(ctx context.Context) (*File, error) {
@@ -448,6 +472,7 @@ func (fq *FileQuery) Clone() *FileQuery {
 		withEntities:        fq.withEntities.Clone(),
 		withShares:          fq.withShares.Clone(),
 		withDirectLinks:     fq.withDirectLinks.Clone(),
+		withEvents:          fq.withEvents.Clone(),
 		// clone intermediate query.
 		sql:  fq.sql.Clone(),
 		path: fq.path,
@@ -542,6 +567,17 @@ func (fq *FileQuery) WithDirectLinks(opts ...func(*DirectLinkQuery)) *FileQuery 
 	return fq
 }
 
+// WithEvents tells the query-builder to eager-load the nodes that are connected to
+// the "events" edge. The optional arguments are used to configure the query builder of the edge.
+func (fq *FileQuery) WithEvents(opts ...func(*EventQuery)) *FileQuery {
+	query := (&EventClient{config: fq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	fq.withEvents = query
+	return fq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -620,7 +656,7 @@ func (fq *FileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*File, e
 	var (
 		nodes       = []*File{}
 		_spec       = fq.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [9]bool{
 			fq.withOwner != nil,
 			fq.withStoragePolicies != nil,
 			fq.withParent != nil,
@@ -629,6 +665,7 @@ func (fq *FileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*File, e
 			fq.withEntities != nil,
 			fq.withShares != nil,
 			fq.withDirectLinks != nil,
+			fq.withEvents != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -699,6 +736,13 @@ func (fq *FileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*File, e
 		if err := fq.loadDirectLinks(ctx, query, nodes,
 			func(n *File) { n.Edges.DirectLinks = []*DirectLink{} },
 			func(n *File, e *DirectLink) { n.Edges.DirectLinks = append(n.Edges.DirectLinks, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := fq.withEvents; query != nil {
+		if err := fq.loadEvents(ctx, query, nodes,
+			func(n *File) { n.Edges.Events = []*Event{} },
+			func(n *File, e *Event) { n.Edges.Events = append(n.Edges.Events, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -969,6 +1013,36 @@ func (fq *FileQuery) loadDirectLinks(ctx context.Context, query *DirectLinkQuery
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "file_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (fq *FileQuery) loadEvents(ctx context.Context, query *EventQuery, nodes []*File, init func(*File), assign func(*File, *Event)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*File)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(event.FieldFileEvents)
+	}
+	query.Where(predicate.Event(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(file.EventsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.FileEvents
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "file_events" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

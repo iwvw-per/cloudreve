@@ -38,6 +38,11 @@ func InitializeDBClient(l logging.Logger,
 		}
 	} else {
 		l.Info("Database schema is up to date.")
+		// 即使版本标记已存在，也执行增量 schema 同步（ent 迁移是幂等的），
+		// 确保升级版本时新增的字段/表被补齐到已部署的数据库上。
+		if err := client.Schema.Create(ctx); err != nil {
+			return nil, fmt.Errorf("failed to sync database schema: %w", err)
+		}
 	}
 
 	//createMockData(client, ctx)

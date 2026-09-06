@@ -15,6 +15,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/logging"
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
 	"github.com/cloudreve/Cloudreve/v4/pkg/setting"
+	"github.com/samber/lo"
 )
 
 var (
@@ -125,6 +126,21 @@ func (n *shareNavigator) Root(ctx context.Context, path *fs.URI) (*File, error) 
 	}
 
 	n.owner = share.Edges.User
+
+	// Paid share: only the owner and users who purchased access may proceed.
+	if shareProps := share.Props; shareProps != nil && shareProps.Price > 0 && n.user.ID != n.owner.ID {
+		purchased := lo.Contains(shareProps.PurchasedUsers, n.user.ID)
+		if !purchased {
+			if inventory.IsAnonymousUser(n.user) {
+				return nil, serializer.NewError(
+					serializer.CodeAnonymouseAccessDenied,
+					"Please sign in to purchase this share",
+					nil,
+				)
+			}
+			return nil, ErrNotPurchased
+		}
+	}
 
 	// Check password
 	if share.Password != "" && share.Password != path.Password() {

@@ -151,6 +151,48 @@ func (uu *UserUpdate) AddStorage(i int64) *UserUpdate {
 	return uu
 }
 
+// SetExtraStorage sets the "extra_storage" field.
+func (uu *UserUpdate) SetExtraStorage(i int64) *UserUpdate {
+	uu.mutation.ResetExtraStorage()
+	uu.mutation.SetExtraStorage(i)
+	return uu
+}
+
+// SetNillableExtraStorage sets the "extra_storage" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableExtraStorage(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetExtraStorage(*i)
+	}
+	return uu
+}
+
+// AddExtraStorage adds i to the "extra_storage" field.
+func (uu *UserUpdate) AddExtraStorage(i int64) *UserUpdate {
+	uu.mutation.AddExtraStorage(i)
+	return uu
+}
+
+// SetExtraStorageExpire sets the "extra_storage_expire" field.
+func (uu *UserUpdate) SetExtraStorageExpire(i int64) *UserUpdate {
+	uu.mutation.ResetExtraStorageExpire()
+	uu.mutation.SetExtraStorageExpire(i)
+	return uu
+}
+
+// SetNillableExtraStorageExpire sets the "extra_storage_expire" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableExtraStorageExpire(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetExtraStorageExpire(*i)
+	}
+	return uu
+}
+
+// AddExtraStorageExpire adds i to the "extra_storage_expire" field.
+func (uu *UserUpdate) AddExtraStorageExpire(i int64) *UserUpdate {
+	uu.mutation.AddExtraStorageExpire(i)
+	return uu
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (uu *UserUpdate) SetTwoFactorSecret(s string) *UserUpdate {
 	uu.mutation.SetTwoFactorSecret(s)
@@ -214,6 +256,48 @@ func (uu *UserUpdate) SetNillableGroupUsers(i *int) *UserUpdate {
 	if i != nil {
 		uu.SetGroupUsers(*i)
 	}
+	return uu
+}
+
+// SetGroupExpires sets the "group_expires" field.
+func (uu *UserUpdate) SetGroupExpires(i int64) *UserUpdate {
+	uu.mutation.ResetGroupExpires()
+	uu.mutation.SetGroupExpires(i)
+	return uu
+}
+
+// SetNillableGroupExpires sets the "group_expires" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableGroupExpires(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetGroupExpires(*i)
+	}
+	return uu
+}
+
+// AddGroupExpires adds i to the "group_expires" field.
+func (uu *UserUpdate) AddGroupExpires(i int64) *UserUpdate {
+	uu.mutation.AddGroupExpires(i)
+	return uu
+}
+
+// SetPreviousGroup sets the "previous_group" field.
+func (uu *UserUpdate) SetPreviousGroup(i int) *UserUpdate {
+	uu.mutation.ResetPreviousGroup()
+	uu.mutation.SetPreviousGroup(i)
+	return uu
+}
+
+// SetNillablePreviousGroup sets the "previous_group" field if the given value is not nil.
+func (uu *UserUpdate) SetNillablePreviousGroup(i *int) *UserUpdate {
+	if i != nil {
+		uu.SetPreviousGroup(*i)
+	}
+	return uu
+}
+
+// AddPreviousGroup adds i to the "previous_group" field.
+func (uu *UserUpdate) AddPreviousGroup(i int) *UserUpdate {
+	uu.mutation.AddPreviousGroup(i)
 	return uu
 }
 
@@ -835,6 +919,18 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.AddedStorage(); ok {
 		_spec.AddField(user.FieldStorage, field.TypeInt64, value)
 	}
+	if value, ok := uu.mutation.ExtraStorage(); ok {
+		_spec.SetField(user.FieldExtraStorage, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.AddedExtraStorage(); ok {
+		_spec.AddField(user.FieldExtraStorage, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.ExtraStorageExpire(); ok {
+		_spec.SetField(user.FieldExtraStorageExpire, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.AddedExtraStorageExpire(); ok {
+		_spec.AddField(user.FieldExtraStorageExpire, field.TypeInt64, value)
+	}
 	if value, ok := uu.mutation.TwoFactorSecret(); ok {
 		_spec.SetField(user.FieldTwoFactorSecret, field.TypeString, value)
 	}
@@ -852,6 +948,18 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.SettingsCleared() {
 		_spec.ClearField(user.FieldSettings, field.TypeJSON)
+	}
+	if value, ok := uu.mutation.GroupExpires(); ok {
+		_spec.SetField(user.FieldGroupExpires, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.AddedGroupExpires(); ok {
+		_spec.AddField(user.FieldGroupExpires, field.TypeInt64, value)
+	}
+	if value, ok := uu.mutation.PreviousGroup(); ok {
+		_spec.SetField(user.FieldPreviousGroup, field.TypeInt, value)
+	}
+	if value, ok := uu.mutation.AddedPreviousGroup(); ok {
+		_spec.AddField(user.FieldPreviousGroup, field.TypeInt, value)
 	}
 	if value, ok := uu.mutation.Credit(); ok {
 		_spec.SetField(user.FieldCredit, field.TypeInt, value)
@@ -1602,6 +1710,48 @@ func (uuo *UserUpdateOne) AddStorage(i int64) *UserUpdateOne {
 	return uuo
 }
 
+// SetExtraStorage sets the "extra_storage" field.
+func (uuo *UserUpdateOne) SetExtraStorage(i int64) *UserUpdateOne {
+	uuo.mutation.ResetExtraStorage()
+	uuo.mutation.SetExtraStorage(i)
+	return uuo
+}
+
+// SetNillableExtraStorage sets the "extra_storage" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableExtraStorage(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetExtraStorage(*i)
+	}
+	return uuo
+}
+
+// AddExtraStorage adds i to the "extra_storage" field.
+func (uuo *UserUpdateOne) AddExtraStorage(i int64) *UserUpdateOne {
+	uuo.mutation.AddExtraStorage(i)
+	return uuo
+}
+
+// SetExtraStorageExpire sets the "extra_storage_expire" field.
+func (uuo *UserUpdateOne) SetExtraStorageExpire(i int64) *UserUpdateOne {
+	uuo.mutation.ResetExtraStorageExpire()
+	uuo.mutation.SetExtraStorageExpire(i)
+	return uuo
+}
+
+// SetNillableExtraStorageExpire sets the "extra_storage_expire" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableExtraStorageExpire(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetExtraStorageExpire(*i)
+	}
+	return uuo
+}
+
+// AddExtraStorageExpire adds i to the "extra_storage_expire" field.
+func (uuo *UserUpdateOne) AddExtraStorageExpire(i int64) *UserUpdateOne {
+	uuo.mutation.AddExtraStorageExpire(i)
+	return uuo
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (uuo *UserUpdateOne) SetTwoFactorSecret(s string) *UserUpdateOne {
 	uuo.mutation.SetTwoFactorSecret(s)
@@ -1665,6 +1815,48 @@ func (uuo *UserUpdateOne) SetNillableGroupUsers(i *int) *UserUpdateOne {
 	if i != nil {
 		uuo.SetGroupUsers(*i)
 	}
+	return uuo
+}
+
+// SetGroupExpires sets the "group_expires" field.
+func (uuo *UserUpdateOne) SetGroupExpires(i int64) *UserUpdateOne {
+	uuo.mutation.ResetGroupExpires()
+	uuo.mutation.SetGroupExpires(i)
+	return uuo
+}
+
+// SetNillableGroupExpires sets the "group_expires" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableGroupExpires(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetGroupExpires(*i)
+	}
+	return uuo
+}
+
+// AddGroupExpires adds i to the "group_expires" field.
+func (uuo *UserUpdateOne) AddGroupExpires(i int64) *UserUpdateOne {
+	uuo.mutation.AddGroupExpires(i)
+	return uuo
+}
+
+// SetPreviousGroup sets the "previous_group" field.
+func (uuo *UserUpdateOne) SetPreviousGroup(i int) *UserUpdateOne {
+	uuo.mutation.ResetPreviousGroup()
+	uuo.mutation.SetPreviousGroup(i)
+	return uuo
+}
+
+// SetNillablePreviousGroup sets the "previous_group" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillablePreviousGroup(i *int) *UserUpdateOne {
+	if i != nil {
+		uuo.SetPreviousGroup(*i)
+	}
+	return uuo
+}
+
+// AddPreviousGroup adds i to the "previous_group" field.
+func (uuo *UserUpdateOne) AddPreviousGroup(i int) *UserUpdateOne {
+	uuo.mutation.AddPreviousGroup(i)
 	return uuo
 }
 
@@ -2316,6 +2508,18 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.AddedStorage(); ok {
 		_spec.AddField(user.FieldStorage, field.TypeInt64, value)
 	}
+	if value, ok := uuo.mutation.ExtraStorage(); ok {
+		_spec.SetField(user.FieldExtraStorage, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.AddedExtraStorage(); ok {
+		_spec.AddField(user.FieldExtraStorage, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.ExtraStorageExpire(); ok {
+		_spec.SetField(user.FieldExtraStorageExpire, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.AddedExtraStorageExpire(); ok {
+		_spec.AddField(user.FieldExtraStorageExpire, field.TypeInt64, value)
+	}
 	if value, ok := uuo.mutation.TwoFactorSecret(); ok {
 		_spec.SetField(user.FieldTwoFactorSecret, field.TypeString, value)
 	}
@@ -2333,6 +2537,18 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.SettingsCleared() {
 		_spec.ClearField(user.FieldSettings, field.TypeJSON)
+	}
+	if value, ok := uuo.mutation.GroupExpires(); ok {
+		_spec.SetField(user.FieldGroupExpires, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.AddedGroupExpires(); ok {
+		_spec.AddField(user.FieldGroupExpires, field.TypeInt64, value)
+	}
+	if value, ok := uuo.mutation.PreviousGroup(); ok {
+		_spec.SetField(user.FieldPreviousGroup, field.TypeInt, value)
+	}
+	if value, ok := uuo.mutation.AddedPreviousGroup(); ok {
+		_spec.AddField(user.FieldPreviousGroup, field.TypeInt, value)
 	}
 	if value, ok := uuo.mutation.Credit(); ok {
 		_spec.SetField(user.FieldCredit, field.TypeInt, value)

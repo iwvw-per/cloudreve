@@ -27,6 +27,12 @@ func (User) Fields() []ent.Field {
 			Default("active"),
 		field.Int64("storage").
 			Default(0),
+		field.Int64("extra_storage").
+			Default(0).
+			Comment("Additional storage capacity purchased via storage packs"),
+		field.Int64("extra_storage_expire").
+			Default(0).
+			Comment("Unix timestamp when extra_storage expires, 0 means never"),
 		field.String("two_factor_secret").
 			Sensitive().
 			Optional(),
@@ -36,6 +42,12 @@ func (User) Fields() []ent.Field {
 			Default(&types.UserSetting{}).
 			Optional(),
 		field.Int("group_users"),
+		field.Int64("group_expires").
+			Default(0).
+			Comment("Unix timestamp when current group expires, 0 means never"),
+		field.Int("previous_group").
+			Default(0).
+			Comment("Group ID to fall back to when current group expires"),
 		field.Int("credit").
 			Default(0).
 			Comment("User credit points balance"),

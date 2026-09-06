@@ -194,6 +194,7 @@ const (
 type AppSetting struct {
 	Promotion        bool
 	DesktopPromotion bool
+	ShopEnabled      bool
 }
 
 type EmailTemplate struct {

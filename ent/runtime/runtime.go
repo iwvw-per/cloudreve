@@ -546,12 +546,28 @@ func init() {
 	userDescStorage := userFields[4].Descriptor()
 	// user.DefaultStorage holds the default value on creation for the storage field.
 	user.DefaultStorage = userDescStorage.Default.(int64)
+	// userDescExtraStorage is the schema descriptor for extra_storage field.
+	userDescExtraStorage := userFields[5].Descriptor()
+	// user.DefaultExtraStorage holds the default value on creation for the extra_storage field.
+	user.DefaultExtraStorage = userDescExtraStorage.Default.(int64)
+	// userDescExtraStorageExpire is the schema descriptor for extra_storage_expire field.
+	userDescExtraStorageExpire := userFields[6].Descriptor()
+	// user.DefaultExtraStorageExpire holds the default value on creation for the extra_storage_expire field.
+	user.DefaultExtraStorageExpire = userDescExtraStorageExpire.Default.(int64)
 	// userDescSettings is the schema descriptor for settings field.
-	userDescSettings := userFields[7].Descriptor()
+	userDescSettings := userFields[9].Descriptor()
 	// user.DefaultSettings holds the default value on creation for the settings field.
 	user.DefaultSettings = userDescSettings.Default.(*types.UserSetting)
+	// userDescGroupExpires is the schema descriptor for group_expires field.
+	userDescGroupExpires := userFields[11].Descriptor()
+	// user.DefaultGroupExpires holds the default value on creation for the group_expires field.
+	user.DefaultGroupExpires = userDescGroupExpires.Default.(int64)
+	// userDescPreviousGroup is the schema descriptor for previous_group field.
+	userDescPreviousGroup := userFields[12].Descriptor()
+	// user.DefaultPreviousGroup holds the default value on creation for the previous_group field.
+	user.DefaultPreviousGroup = userDescPreviousGroup.Default.(int)
 	// userDescCredit is the schema descriptor for credit field.
-	userDescCredit := userFields[9].Descriptor()
+	userDescCredit := userFields[13].Descriptor()
 	// user.DefaultCredit holds the default value on creation for the credit field.
 	user.DefaultCredit = userDescCredit.Default.(int)
 }

@@ -90,6 +90,16 @@ func Storage(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldStorage, v))
 }
 
+// ExtraStorage applies equality check predicate on the "extra_storage" field. It's identical to ExtraStorageEQ.
+func ExtraStorage(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldExtraStorage, v))
+}
+
+// ExtraStorageExpire applies equality check predicate on the "extra_storage_expire" field. It's identical to ExtraStorageExpireEQ.
+func ExtraStorageExpire(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldExtraStorageExpire, v))
+}
+
 // TwoFactorSecret applies equality check predicate on the "two_factor_secret" field. It's identical to TwoFactorSecretEQ.
 func TwoFactorSecret(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldTwoFactorSecret, v))
@@ -103,6 +113,16 @@ func Avatar(v string) predicate.User {
 // GroupUsers applies equality check predicate on the "group_users" field. It's identical to GroupUsersEQ.
 func GroupUsers(v int) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldGroupUsers, v))
+}
+
+// GroupExpires applies equality check predicate on the "group_expires" field. It's identical to GroupExpiresEQ.
+func GroupExpires(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldGroupExpires, v))
+}
+
+// PreviousGroup applies equality check predicate on the "previous_group" field. It's identical to PreviousGroupEQ.
+func PreviousGroup(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPreviousGroup, v))
 }
 
 // Credit applies equality check predicate on the "credit" field. It's identical to CreditEQ.
@@ -505,6 +525,86 @@ func StorageLTE(v int64) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldStorage, v))
 }
 
+// ExtraStorageEQ applies the EQ predicate on the "extra_storage" field.
+func ExtraStorageEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldExtraStorage, v))
+}
+
+// ExtraStorageNEQ applies the NEQ predicate on the "extra_storage" field.
+func ExtraStorageNEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldExtraStorage, v))
+}
+
+// ExtraStorageIn applies the In predicate on the "extra_storage" field.
+func ExtraStorageIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldExtraStorage, vs...))
+}
+
+// ExtraStorageNotIn applies the NotIn predicate on the "extra_storage" field.
+func ExtraStorageNotIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldExtraStorage, vs...))
+}
+
+// ExtraStorageGT applies the GT predicate on the "extra_storage" field.
+func ExtraStorageGT(v int64) predicate.User {
+	return predicate.User(sql.FieldGT(FieldExtraStorage, v))
+}
+
+// ExtraStorageGTE applies the GTE predicate on the "extra_storage" field.
+func ExtraStorageGTE(v int64) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldExtraStorage, v))
+}
+
+// ExtraStorageLT applies the LT predicate on the "extra_storage" field.
+func ExtraStorageLT(v int64) predicate.User {
+	return predicate.User(sql.FieldLT(FieldExtraStorage, v))
+}
+
+// ExtraStorageLTE applies the LTE predicate on the "extra_storage" field.
+func ExtraStorageLTE(v int64) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldExtraStorage, v))
+}
+
+// ExtraStorageExpireEQ applies the EQ predicate on the "extra_storage_expire" field.
+func ExtraStorageExpireEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldExtraStorageExpire, v))
+}
+
+// ExtraStorageExpireNEQ applies the NEQ predicate on the "extra_storage_expire" field.
+func ExtraStorageExpireNEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldExtraStorageExpire, v))
+}
+
+// ExtraStorageExpireIn applies the In predicate on the "extra_storage_expire" field.
+func ExtraStorageExpireIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldExtraStorageExpire, vs...))
+}
+
+// ExtraStorageExpireNotIn applies the NotIn predicate on the "extra_storage_expire" field.
+func ExtraStorageExpireNotIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldExtraStorageExpire, vs...))
+}
+
+// ExtraStorageExpireGT applies the GT predicate on the "extra_storage_expire" field.
+func ExtraStorageExpireGT(v int64) predicate.User {
+	return predicate.User(sql.FieldGT(FieldExtraStorageExpire, v))
+}
+
+// ExtraStorageExpireGTE applies the GTE predicate on the "extra_storage_expire" field.
+func ExtraStorageExpireGTE(v int64) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldExtraStorageExpire, v))
+}
+
+// ExtraStorageExpireLT applies the LT predicate on the "extra_storage_expire" field.
+func ExtraStorageExpireLT(v int64) predicate.User {
+	return predicate.User(sql.FieldLT(FieldExtraStorageExpire, v))
+}
+
+// ExtraStorageExpireLTE applies the LTE predicate on the "extra_storage_expire" field.
+func ExtraStorageExpireLTE(v int64) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldExtraStorageExpire, v))
+}
+
 // TwoFactorSecretEQ applies the EQ predicate on the "two_factor_secret" field.
 func TwoFactorSecretEQ(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldTwoFactorSecret, v))
@@ -683,6 +783,86 @@ func GroupUsersIn(vs ...int) predicate.User {
 // GroupUsersNotIn applies the NotIn predicate on the "group_users" field.
 func GroupUsersNotIn(vs ...int) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldGroupUsers, vs...))
+}
+
+// GroupExpiresEQ applies the EQ predicate on the "group_expires" field.
+func GroupExpiresEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldGroupExpires, v))
+}
+
+// GroupExpiresNEQ applies the NEQ predicate on the "group_expires" field.
+func GroupExpiresNEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldGroupExpires, v))
+}
+
+// GroupExpiresIn applies the In predicate on the "group_expires" field.
+func GroupExpiresIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldGroupExpires, vs...))
+}
+
+// GroupExpiresNotIn applies the NotIn predicate on the "group_expires" field.
+func GroupExpiresNotIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldGroupExpires, vs...))
+}
+
+// GroupExpiresGT applies the GT predicate on the "group_expires" field.
+func GroupExpiresGT(v int64) predicate.User {
+	return predicate.User(sql.FieldGT(FieldGroupExpires, v))
+}
+
+// GroupExpiresGTE applies the GTE predicate on the "group_expires" field.
+func GroupExpiresGTE(v int64) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldGroupExpires, v))
+}
+
+// GroupExpiresLT applies the LT predicate on the "group_expires" field.
+func GroupExpiresLT(v int64) predicate.User {
+	return predicate.User(sql.FieldLT(FieldGroupExpires, v))
+}
+
+// GroupExpiresLTE applies the LTE predicate on the "group_expires" field.
+func GroupExpiresLTE(v int64) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldGroupExpires, v))
+}
+
+// PreviousGroupEQ applies the EQ predicate on the "previous_group" field.
+func PreviousGroupEQ(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPreviousGroup, v))
+}
+
+// PreviousGroupNEQ applies the NEQ predicate on the "previous_group" field.
+func PreviousGroupNEQ(v int) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldPreviousGroup, v))
+}
+
+// PreviousGroupIn applies the In predicate on the "previous_group" field.
+func PreviousGroupIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldIn(FieldPreviousGroup, vs...))
+}
+
+// PreviousGroupNotIn applies the NotIn predicate on the "previous_group" field.
+func PreviousGroupNotIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldPreviousGroup, vs...))
+}
+
+// PreviousGroupGT applies the GT predicate on the "previous_group" field.
+func PreviousGroupGT(v int) predicate.User {
+	return predicate.User(sql.FieldGT(FieldPreviousGroup, v))
+}
+
+// PreviousGroupGTE applies the GTE predicate on the "previous_group" field.
+func PreviousGroupGTE(v int) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldPreviousGroup, v))
+}
+
+// PreviousGroupLT applies the LT predicate on the "previous_group" field.
+func PreviousGroupLT(v int) predicate.User {
+	return predicate.User(sql.FieldLT(FieldPreviousGroup, v))
+}
+
+// PreviousGroupLTE applies the LTE predicate on the "previous_group" field.
+func PreviousGroupLTE(v int) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldPreviousGroup, v))
 }
 
 // CreditEQ applies the EQ predicate on the "credit" field.

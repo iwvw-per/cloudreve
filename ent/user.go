@@ -36,6 +36,10 @@ type User struct {
 	Status user.Status `json:"status,omitempty"`
 	// Storage holds the value of the "storage" field.
 	Storage int64 `json:"storage,omitempty"`
+	// Additional storage capacity purchased via storage packs
+	ExtraStorage int64 `json:"extra_storage,omitempty"`
+	// Unix timestamp when extra_storage expires, 0 means never
+	ExtraStorageExpire int64 `json:"extra_storage_expire,omitempty"`
 	// TwoFactorSecret holds the value of the "two_factor_secret" field.
 	TwoFactorSecret string `json:"-"`
 	// Avatar holds the value of the "avatar" field.
@@ -44,6 +48,10 @@ type User struct {
 	Settings *types.UserSetting `json:"settings,omitempty"`
 	// GroupUsers holds the value of the "group_users" field.
 	GroupUsers int `json:"group_users,omitempty"`
+	// Unix timestamp when current group expires, 0 means never
+	GroupExpires int64 `json:"group_expires,omitempty"`
+	// Group ID to fall back to when current group expires
+	PreviousGroup int `json:"previous_group,omitempty"`
 	// User credit points balance
 	Credit int `json:"credit,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -224,7 +232,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldSettings:
 			values[i] = new([]byte)
-		case user.FieldID, user.FieldStorage, user.FieldGroupUsers, user.FieldCredit:
+		case user.FieldID, user.FieldStorage, user.FieldExtraStorage, user.FieldExtraStorageExpire, user.FieldGroupUsers, user.FieldGroupExpires, user.FieldPreviousGroup, user.FieldCredit:
 			values[i] = new(sql.NullInt64)
 		case user.FieldEmail, user.FieldNick, user.FieldPassword, user.FieldStatus, user.FieldTwoFactorSecret, user.FieldAvatar:
 			values[i] = new(sql.NullString)
@@ -300,6 +308,18 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.Storage = value.Int64
 			}
+		case user.FieldExtraStorage:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field extra_storage", values[i])
+			} else if value.Valid {
+				u.ExtraStorage = value.Int64
+			}
+		case user.FieldExtraStorageExpire:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field extra_storage_expire", values[i])
+			} else if value.Valid {
+				u.ExtraStorageExpire = value.Int64
+			}
 		case user.FieldTwoFactorSecret:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field two_factor_secret", values[i])
@@ -325,6 +345,18 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field group_users", values[i])
 			} else if value.Valid {
 				u.GroupUsers = int(value.Int64)
+			}
+		case user.FieldGroupExpires:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field group_expires", values[i])
+			} else if value.Valid {
+				u.GroupExpires = value.Int64
+			}
+		case user.FieldPreviousGroup:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field previous_group", values[i])
+			} else if value.Valid {
+				u.PreviousGroup = int(value.Int64)
 			}
 		case user.FieldCredit:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -463,6 +495,12 @@ func (u *User) String() string {
 	builder.WriteString("storage=")
 	builder.WriteString(fmt.Sprintf("%v", u.Storage))
 	builder.WriteString(", ")
+	builder.WriteString("extra_storage=")
+	builder.WriteString(fmt.Sprintf("%v", u.ExtraStorage))
+	builder.WriteString(", ")
+	builder.WriteString("extra_storage_expire=")
+	builder.WriteString(fmt.Sprintf("%v", u.ExtraStorageExpire))
+	builder.WriteString(", ")
 	builder.WriteString("two_factor_secret=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("avatar=")
@@ -473,6 +511,12 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("group_users=")
 	builder.WriteString(fmt.Sprintf("%v", u.GroupUsers))
+	builder.WriteString(", ")
+	builder.WriteString("group_expires=")
+	builder.WriteString(fmt.Sprintf("%v", u.GroupExpires))
+	builder.WriteString(", ")
+	builder.WriteString("previous_group=")
+	builder.WriteString(fmt.Sprintf("%v", u.PreviousGroup))
 	builder.WriteString(", ")
 	builder.WriteString("credit=")
 	builder.WriteString(fmt.Sprintf("%v", u.Credit))

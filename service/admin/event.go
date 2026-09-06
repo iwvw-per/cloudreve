@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +25,16 @@ func RecordEvent(c *gin.Context, e *inventory.CreateEventParams) {
 		return
 	}
 
+	// 订阅过滤：audit_event_subscriptions 为空数组时记录全部事件类型。
+	if v, err := dep.SettingClient().Get(c, auditEventSubscriptionsKey); err == nil && v != "" && v != "[]" {
+		var subscribed []int
+		if jerr := json.Unmarshal([]byte(v), &subscribed); jerr == nil {
+			if !lo.Contains(subscribed, int(e.Type)) {
+				return
+			}
+		}
+	}
+
 	if e.CorrelationID == "" {
 		e.CorrelationID = logging.CorrelationID(c).String()
 	}
@@ -36,7 +47,10 @@ func RecordEvent(c *gin.Context, e *inventory.CreateEventParams) {
 		}
 	}
 
-	_, _ = dep.EventClient().Create(c, e)
+	_, err := dep.EventClient().Create(c, e)
+	if err != nil {
+		logging.FromContext(c).Warning("Failed to record audit event: %s", err)
+	}
 }
 
 type ListAuditLogResponse struct {
@@ -53,6 +67,8 @@ const (
 	eventTypeCondition = "event_type"
 	eventUserCondition = "event_user"
 	eventIDCondition   = "event_id"
+	// auditEventSubscriptionsKey 审计事件订阅设置键，值为 JSON 数组（事件类型），空数组表示全部记录。
+	auditEventSubscriptionsKey = "audit_event_subscriptions"
 )
 
 func (s *AdminListService) Events(c *gin.Context) (*ListAuditLogResponse, error) {

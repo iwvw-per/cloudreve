@@ -15,6 +15,7 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/email"
 	"github.com/cloudreve/Cloudreve/v4/pkg/hashid"
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
+	"github.com/cloudreve/Cloudreve/v4/pkg/setting"
 	"github.com/cloudreve/Cloudreve/v4/pkg/util"
 	"github.com/gin-gonic/gin"
 )
@@ -141,6 +142,18 @@ func filterEmailDomain(ctx context.Context, dep dependency.Dep, email string) er
 	})
 	if err != nil {
 		return err
+	}
+
+	// 禁用邮箱子地址（user+tag@domain）。
+	disableSub, err := dep.SettingClient().Get(ctx, "disable_sub_address_email")
+	if err == nil && setting.IsTrueValue(disableSub) {
+		local := email
+		if idx := strings.LastIndex(local, "@"); idx >= 0 {
+			local = local[:idx]
+		}
+		if plus := strings.LastIndex(local, "+"); plus >= 0 {
+			return serializer.NewError(serializer.CodeEmailProviderBaned, "Email sub-address is not allowed", nil)
+		}
 	}
 
 	provider := strings.TrimSpace(vals["filter_email_provider"])

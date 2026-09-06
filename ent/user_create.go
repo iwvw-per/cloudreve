@@ -132,6 +132,34 @@ func (uc *UserCreate) SetNillableStorage(i *int64) *UserCreate {
 	return uc
 }
 
+// SetExtraStorage sets the "extra_storage" field.
+func (uc *UserCreate) SetExtraStorage(i int64) *UserCreate {
+	uc.mutation.SetExtraStorage(i)
+	return uc
+}
+
+// SetNillableExtraStorage sets the "extra_storage" field if the given value is not nil.
+func (uc *UserCreate) SetNillableExtraStorage(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetExtraStorage(*i)
+	}
+	return uc
+}
+
+// SetExtraStorageExpire sets the "extra_storage_expire" field.
+func (uc *UserCreate) SetExtraStorageExpire(i int64) *UserCreate {
+	uc.mutation.SetExtraStorageExpire(i)
+	return uc
+}
+
+// SetNillableExtraStorageExpire sets the "extra_storage_expire" field if the given value is not nil.
+func (uc *UserCreate) SetNillableExtraStorageExpire(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetExtraStorageExpire(*i)
+	}
+	return uc
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (uc *UserCreate) SetTwoFactorSecret(s string) *UserCreate {
 	uc.mutation.SetTwoFactorSecret(s)
@@ -169,6 +197,34 @@ func (uc *UserCreate) SetSettings(ts *types.UserSetting) *UserCreate {
 // SetGroupUsers sets the "group_users" field.
 func (uc *UserCreate) SetGroupUsers(i int) *UserCreate {
 	uc.mutation.SetGroupUsers(i)
+	return uc
+}
+
+// SetGroupExpires sets the "group_expires" field.
+func (uc *UserCreate) SetGroupExpires(i int64) *UserCreate {
+	uc.mutation.SetGroupExpires(i)
+	return uc
+}
+
+// SetNillableGroupExpires sets the "group_expires" field if the given value is not nil.
+func (uc *UserCreate) SetNillableGroupExpires(i *int64) *UserCreate {
+	if i != nil {
+		uc.SetGroupExpires(*i)
+	}
+	return uc
+}
+
+// SetPreviousGroup sets the "previous_group" field.
+func (uc *UserCreate) SetPreviousGroup(i int) *UserCreate {
+	uc.mutation.SetPreviousGroup(i)
+	return uc
+}
+
+// SetNillablePreviousGroup sets the "previous_group" field if the given value is not nil.
+func (uc *UserCreate) SetNillablePreviousGroup(i *int) *UserCreate {
+	if i != nil {
+		uc.SetPreviousGroup(*i)
+	}
 	return uc
 }
 
@@ -451,9 +507,25 @@ func (uc *UserCreate) defaults() error {
 		v := user.DefaultStorage
 		uc.mutation.SetStorage(v)
 	}
+	if _, ok := uc.mutation.ExtraStorage(); !ok {
+		v := user.DefaultExtraStorage
+		uc.mutation.SetExtraStorage(v)
+	}
+	if _, ok := uc.mutation.ExtraStorageExpire(); !ok {
+		v := user.DefaultExtraStorageExpire
+		uc.mutation.SetExtraStorageExpire(v)
+	}
 	if _, ok := uc.mutation.Settings(); !ok {
 		v := user.DefaultSettings
 		uc.mutation.SetSettings(v)
+	}
+	if _, ok := uc.mutation.GroupExpires(); !ok {
+		v := user.DefaultGroupExpires
+		uc.mutation.SetGroupExpires(v)
+	}
+	if _, ok := uc.mutation.PreviousGroup(); !ok {
+		v := user.DefaultPreviousGroup
+		uc.mutation.SetPreviousGroup(v)
 	}
 	if _, ok := uc.mutation.Credit(); !ok {
 		v := user.DefaultCredit
@@ -497,8 +569,20 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Storage(); !ok {
 		return &ValidationError{Name: "storage", err: errors.New(`ent: missing required field "User.storage"`)}
 	}
+	if _, ok := uc.mutation.ExtraStorage(); !ok {
+		return &ValidationError{Name: "extra_storage", err: errors.New(`ent: missing required field "User.extra_storage"`)}
+	}
+	if _, ok := uc.mutation.ExtraStorageExpire(); !ok {
+		return &ValidationError{Name: "extra_storage_expire", err: errors.New(`ent: missing required field "User.extra_storage_expire"`)}
+	}
 	if _, ok := uc.mutation.GroupUsers(); !ok {
 		return &ValidationError{Name: "group_users", err: errors.New(`ent: missing required field "User.group_users"`)}
+	}
+	if _, ok := uc.mutation.GroupExpires(); !ok {
+		return &ValidationError{Name: "group_expires", err: errors.New(`ent: missing required field "User.group_expires"`)}
+	}
+	if _, ok := uc.mutation.PreviousGroup(); !ok {
+		return &ValidationError{Name: "previous_group", err: errors.New(`ent: missing required field "User.previous_group"`)}
 	}
 	if _, ok := uc.mutation.Credit(); !ok {
 		return &ValidationError{Name: "credit", err: errors.New(`ent: missing required field "User.credit"`)}
@@ -572,6 +656,14 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldStorage, field.TypeInt64, value)
 		_node.Storage = value
 	}
+	if value, ok := uc.mutation.ExtraStorage(); ok {
+		_spec.SetField(user.FieldExtraStorage, field.TypeInt64, value)
+		_node.ExtraStorage = value
+	}
+	if value, ok := uc.mutation.ExtraStorageExpire(); ok {
+		_spec.SetField(user.FieldExtraStorageExpire, field.TypeInt64, value)
+		_node.ExtraStorageExpire = value
+	}
 	if value, ok := uc.mutation.TwoFactorSecret(); ok {
 		_spec.SetField(user.FieldTwoFactorSecret, field.TypeString, value)
 		_node.TwoFactorSecret = value
@@ -583,6 +675,14 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Settings(); ok {
 		_spec.SetField(user.FieldSettings, field.TypeJSON, value)
 		_node.Settings = value
+	}
+	if value, ok := uc.mutation.GroupExpires(); ok {
+		_spec.SetField(user.FieldGroupExpires, field.TypeInt64, value)
+		_node.GroupExpires = value
+	}
+	if value, ok := uc.mutation.PreviousGroup(); ok {
+		_spec.SetField(user.FieldPreviousGroup, field.TypeInt, value)
+		_node.PreviousGroup = value
 	}
 	if value, ok := uc.mutation.Credit(); ok {
 		_spec.SetField(user.FieldCredit, field.TypeInt, value)
@@ -967,6 +1067,42 @@ func (u *UserUpsert) AddStorage(v int64) *UserUpsert {
 	return u
 }
 
+// SetExtraStorage sets the "extra_storage" field.
+func (u *UserUpsert) SetExtraStorage(v int64) *UserUpsert {
+	u.Set(user.FieldExtraStorage, v)
+	return u
+}
+
+// UpdateExtraStorage sets the "extra_storage" field to the value that was provided on create.
+func (u *UserUpsert) UpdateExtraStorage() *UserUpsert {
+	u.SetExcluded(user.FieldExtraStorage)
+	return u
+}
+
+// AddExtraStorage adds v to the "extra_storage" field.
+func (u *UserUpsert) AddExtraStorage(v int64) *UserUpsert {
+	u.Add(user.FieldExtraStorage, v)
+	return u
+}
+
+// SetExtraStorageExpire sets the "extra_storage_expire" field.
+func (u *UserUpsert) SetExtraStorageExpire(v int64) *UserUpsert {
+	u.Set(user.FieldExtraStorageExpire, v)
+	return u
+}
+
+// UpdateExtraStorageExpire sets the "extra_storage_expire" field to the value that was provided on create.
+func (u *UserUpsert) UpdateExtraStorageExpire() *UserUpsert {
+	u.SetExcluded(user.FieldExtraStorageExpire)
+	return u
+}
+
+// AddExtraStorageExpire adds v to the "extra_storage_expire" field.
+func (u *UserUpsert) AddExtraStorageExpire(v int64) *UserUpsert {
+	u.Add(user.FieldExtraStorageExpire, v)
+	return u
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (u *UserUpsert) SetTwoFactorSecret(v string) *UserUpsert {
 	u.Set(user.FieldTwoFactorSecret, v)
@@ -1030,6 +1166,42 @@ func (u *UserUpsert) SetGroupUsers(v int) *UserUpsert {
 // UpdateGroupUsers sets the "group_users" field to the value that was provided on create.
 func (u *UserUpsert) UpdateGroupUsers() *UserUpsert {
 	u.SetExcluded(user.FieldGroupUsers)
+	return u
+}
+
+// SetGroupExpires sets the "group_expires" field.
+func (u *UserUpsert) SetGroupExpires(v int64) *UserUpsert {
+	u.Set(user.FieldGroupExpires, v)
+	return u
+}
+
+// UpdateGroupExpires sets the "group_expires" field to the value that was provided on create.
+func (u *UserUpsert) UpdateGroupExpires() *UserUpsert {
+	u.SetExcluded(user.FieldGroupExpires)
+	return u
+}
+
+// AddGroupExpires adds v to the "group_expires" field.
+func (u *UserUpsert) AddGroupExpires(v int64) *UserUpsert {
+	u.Add(user.FieldGroupExpires, v)
+	return u
+}
+
+// SetPreviousGroup sets the "previous_group" field.
+func (u *UserUpsert) SetPreviousGroup(v int) *UserUpsert {
+	u.Set(user.FieldPreviousGroup, v)
+	return u
+}
+
+// UpdatePreviousGroup sets the "previous_group" field to the value that was provided on create.
+func (u *UserUpsert) UpdatePreviousGroup() *UserUpsert {
+	u.SetExcluded(user.FieldPreviousGroup)
+	return u
+}
+
+// AddPreviousGroup adds v to the "previous_group" field.
+func (u *UserUpsert) AddPreviousGroup(v int) *UserUpsert {
+	u.Add(user.FieldPreviousGroup, v)
 	return u
 }
 
@@ -1215,6 +1387,48 @@ func (u *UserUpsertOne) UpdateStorage() *UserUpsertOne {
 	})
 }
 
+// SetExtraStorage sets the "extra_storage" field.
+func (u *UserUpsertOne) SetExtraStorage(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetExtraStorage(v)
+	})
+}
+
+// AddExtraStorage adds v to the "extra_storage" field.
+func (u *UserUpsertOne) AddExtraStorage(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddExtraStorage(v)
+	})
+}
+
+// UpdateExtraStorage sets the "extra_storage" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateExtraStorage() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateExtraStorage()
+	})
+}
+
+// SetExtraStorageExpire sets the "extra_storage_expire" field.
+func (u *UserUpsertOne) SetExtraStorageExpire(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetExtraStorageExpire(v)
+	})
+}
+
+// AddExtraStorageExpire adds v to the "extra_storage_expire" field.
+func (u *UserUpsertOne) AddExtraStorageExpire(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddExtraStorageExpire(v)
+	})
+}
+
+// UpdateExtraStorageExpire sets the "extra_storage_expire" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateExtraStorageExpire() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateExtraStorageExpire()
+	})
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (u *UserUpsertOne) SetTwoFactorSecret(v string) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
@@ -1289,6 +1503,48 @@ func (u *UserUpsertOne) SetGroupUsers(v int) *UserUpsertOne {
 func (u *UserUpsertOne) UpdateGroupUsers() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateGroupUsers()
+	})
+}
+
+// SetGroupExpires sets the "group_expires" field.
+func (u *UserUpsertOne) SetGroupExpires(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGroupExpires(v)
+	})
+}
+
+// AddGroupExpires adds v to the "group_expires" field.
+func (u *UserUpsertOne) AddGroupExpires(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddGroupExpires(v)
+	})
+}
+
+// UpdateGroupExpires sets the "group_expires" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateGroupExpires() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGroupExpires()
+	})
+}
+
+// SetPreviousGroup sets the "previous_group" field.
+func (u *UserUpsertOne) SetPreviousGroup(v int) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetPreviousGroup(v)
+	})
+}
+
+// AddPreviousGroup adds v to the "previous_group" field.
+func (u *UserUpsertOne) AddPreviousGroup(v int) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddPreviousGroup(v)
+	})
+}
+
+// UpdatePreviousGroup sets the "previous_group" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdatePreviousGroup() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdatePreviousGroup()
 	})
 }
 
@@ -1648,6 +1904,48 @@ func (u *UserUpsertBulk) UpdateStorage() *UserUpsertBulk {
 	})
 }
 
+// SetExtraStorage sets the "extra_storage" field.
+func (u *UserUpsertBulk) SetExtraStorage(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetExtraStorage(v)
+	})
+}
+
+// AddExtraStorage adds v to the "extra_storage" field.
+func (u *UserUpsertBulk) AddExtraStorage(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddExtraStorage(v)
+	})
+}
+
+// UpdateExtraStorage sets the "extra_storage" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateExtraStorage() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateExtraStorage()
+	})
+}
+
+// SetExtraStorageExpire sets the "extra_storage_expire" field.
+func (u *UserUpsertBulk) SetExtraStorageExpire(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetExtraStorageExpire(v)
+	})
+}
+
+// AddExtraStorageExpire adds v to the "extra_storage_expire" field.
+func (u *UserUpsertBulk) AddExtraStorageExpire(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddExtraStorageExpire(v)
+	})
+}
+
+// UpdateExtraStorageExpire sets the "extra_storage_expire" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateExtraStorageExpire() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateExtraStorageExpire()
+	})
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (u *UserUpsertBulk) SetTwoFactorSecret(v string) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
@@ -1722,6 +2020,48 @@ func (u *UserUpsertBulk) SetGroupUsers(v int) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdateGroupUsers() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateGroupUsers()
+	})
+}
+
+// SetGroupExpires sets the "group_expires" field.
+func (u *UserUpsertBulk) SetGroupExpires(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetGroupExpires(v)
+	})
+}
+
+// AddGroupExpires adds v to the "group_expires" field.
+func (u *UserUpsertBulk) AddGroupExpires(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddGroupExpires(v)
+	})
+}
+
+// UpdateGroupExpires sets the "group_expires" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateGroupExpires() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateGroupExpires()
+	})
+}
+
+// SetPreviousGroup sets the "previous_group" field.
+func (u *UserUpsertBulk) SetPreviousGroup(v int) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetPreviousGroup(v)
+	})
+}
+
+// AddPreviousGroup adds v to the "previous_group" field.
+func (u *UserUpsertBulk) AddPreviousGroup(v int) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddPreviousGroup(v)
+	})
+}
+
+// UpdatePreviousGroup sets the "previous_group" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdatePreviousGroup() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdatePreviousGroup()
 	})
 }
 

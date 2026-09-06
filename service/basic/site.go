@@ -63,6 +63,7 @@ type SiteConfig struct {
 	// App settings
 	AppPromotion        bool `json:"app_promotion,omitempty"`
 	DesktopAppPromotion bool `json:"desktop_app_promotion,omitempty"`
+	ShopEnabled         bool `json:"shop_nav_enabled,omitempty"`
 
 	//EmailActive          bool      `json:"emailActive"`
 	//QQLogin              bool      `json:"QQLogin"`
@@ -135,6 +136,7 @@ func (s *GetSettingService) GetSiteConfig(c *gin.Context) (*SiteConfig, error) {
 		return &SiteConfig{
 			AppPromotion:        appSetting.Promotion,
 			DesktopAppPromotion: appSetting.DesktopPromotion,
+			ShopEnabled:         appSetting.ShopEnabled,
 		}, nil
 	case "thumb":
 		// Return supported thumbnail extensions from enabled generators.
@@ -206,6 +208,7 @@ func (s *GetSettingService) GetSiteConfig(c *gin.Context) (*SiteConfig, error) {
 		CapSiteKey:      capCaptcha.SiteKey,
 		CapAssetServer:  capCaptcha.AssetServer,
 		AppPromotion:    appSetting.Promotion,
+		ShopEnabled:     appSetting.ShopEnabled,
 		CustomNavItems:  customNavItems,
 		CustomHTML:      customHTML,
 	}, nil

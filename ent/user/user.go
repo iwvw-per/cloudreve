@@ -33,6 +33,10 @@ const (
 	FieldStatus = "status"
 	// FieldStorage holds the string denoting the storage field in the database.
 	FieldStorage = "storage"
+	// FieldExtraStorage holds the string denoting the extra_storage field in the database.
+	FieldExtraStorage = "extra_storage"
+	// FieldExtraStorageExpire holds the string denoting the extra_storage_expire field in the database.
+	FieldExtraStorageExpire = "extra_storage_expire"
 	// FieldTwoFactorSecret holds the string denoting the two_factor_secret field in the database.
 	FieldTwoFactorSecret = "two_factor_secret"
 	// FieldAvatar holds the string denoting the avatar field in the database.
@@ -41,6 +45,10 @@ const (
 	FieldSettings = "settings"
 	// FieldGroupUsers holds the string denoting the group_users field in the database.
 	FieldGroupUsers = "group_users"
+	// FieldGroupExpires holds the string denoting the group_expires field in the database.
+	FieldGroupExpires = "group_expires"
+	// FieldPreviousGroup holds the string denoting the previous_group field in the database.
+	FieldPreviousGroup = "previous_group"
 	// FieldCredit holds the string denoting the credit field in the database.
 	FieldCredit = "credit"
 	// EdgeGroup holds the string denoting the group edge name in mutations.
@@ -184,10 +192,14 @@ var Columns = []string{
 	FieldPassword,
 	FieldStatus,
 	FieldStorage,
+	FieldExtraStorage,
+	FieldExtraStorageExpire,
 	FieldTwoFactorSecret,
 	FieldAvatar,
 	FieldSettings,
 	FieldGroupUsers,
+	FieldGroupExpires,
+	FieldPreviousGroup,
 	FieldCredit,
 }
 
@@ -221,8 +233,16 @@ var (
 	NickValidator func(string) error
 	// DefaultStorage holds the default value on creation for the "storage" field.
 	DefaultStorage int64
+	// DefaultExtraStorage holds the default value on creation for the "extra_storage" field.
+	DefaultExtraStorage int64
+	// DefaultExtraStorageExpire holds the default value on creation for the "extra_storage_expire" field.
+	DefaultExtraStorageExpire int64
 	// DefaultSettings holds the default value on creation for the "settings" field.
 	DefaultSettings *types.UserSetting
+	// DefaultGroupExpires holds the default value on creation for the "group_expires" field.
+	DefaultGroupExpires int64
+	// DefaultPreviousGroup holds the default value on creation for the "previous_group" field.
+	DefaultPreviousGroup int
 	// DefaultCredit holds the default value on creation for the "credit" field.
 	DefaultCredit int
 )
@@ -303,6 +323,16 @@ func ByStorage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStorage, opts...).ToFunc()
 }
 
+// ByExtraStorage orders the results by the extra_storage field.
+func ByExtraStorage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldExtraStorage, opts...).ToFunc()
+}
+
+// ByExtraStorageExpire orders the results by the extra_storage_expire field.
+func ByExtraStorageExpire(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldExtraStorageExpire, opts...).ToFunc()
+}
+
 // ByTwoFactorSecret orders the results by the two_factor_secret field.
 func ByTwoFactorSecret(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTwoFactorSecret, opts...).ToFunc()
@@ -316,6 +346,16 @@ func ByAvatar(opts ...sql.OrderTermOption) OrderOption {
 // ByGroupUsers orders the results by the group_users field.
 func ByGroupUsers(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGroupUsers, opts...).ToFunc()
+}
+
+// ByGroupExpires orders the results by the group_expires field.
+func ByGroupExpires(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGroupExpires, opts...).ToFunc()
+}
+
+// ByPreviousGroup orders the results by the previous_group field.
+func ByPreviousGroup(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPreviousGroup, opts...).ToFunc()
 }
 
 // ByCredit orders the results by the credit field.

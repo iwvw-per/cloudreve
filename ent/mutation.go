@@ -20922,9 +20922,17 @@ type UserMutation struct {
 	status                        *user.Status
 	storage                       *int64
 	addstorage                    *int64
+	extra_storage                 *int64
+	addextra_storage              *int64
+	extra_storage_expire          *int64
+	addextra_storage_expire       *int64
 	two_factor_secret             *string
 	avatar                        *string
 	settings                      **types.UserSetting
+	group_expires                 *int64
+	addgroup_expires              *int64
+	previous_group                *int
+	addprevious_group             *int
 	credit                        *int
 	addcredit                     *int
 	clearedFields                 map[string]struct{}
@@ -21406,6 +21414,118 @@ func (m *UserMutation) ResetStorage() {
 	m.addstorage = nil
 }
 
+// SetExtraStorage sets the "extra_storage" field.
+func (m *UserMutation) SetExtraStorage(i int64) {
+	m.extra_storage = &i
+	m.addextra_storage = nil
+}
+
+// ExtraStorage returns the value of the "extra_storage" field in the mutation.
+func (m *UserMutation) ExtraStorage() (r int64, exists bool) {
+	v := m.extra_storage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExtraStorage returns the old "extra_storage" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldExtraStorage(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExtraStorage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExtraStorage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExtraStorage: %w", err)
+	}
+	return oldValue.ExtraStorage, nil
+}
+
+// AddExtraStorage adds i to the "extra_storage" field.
+func (m *UserMutation) AddExtraStorage(i int64) {
+	if m.addextra_storage != nil {
+		*m.addextra_storage += i
+	} else {
+		m.addextra_storage = &i
+	}
+}
+
+// AddedExtraStorage returns the value that was added to the "extra_storage" field in this mutation.
+func (m *UserMutation) AddedExtraStorage() (r int64, exists bool) {
+	v := m.addextra_storage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetExtraStorage resets all changes to the "extra_storage" field.
+func (m *UserMutation) ResetExtraStorage() {
+	m.extra_storage = nil
+	m.addextra_storage = nil
+}
+
+// SetExtraStorageExpire sets the "extra_storage_expire" field.
+func (m *UserMutation) SetExtraStorageExpire(i int64) {
+	m.extra_storage_expire = &i
+	m.addextra_storage_expire = nil
+}
+
+// ExtraStorageExpire returns the value of the "extra_storage_expire" field in the mutation.
+func (m *UserMutation) ExtraStorageExpire() (r int64, exists bool) {
+	v := m.extra_storage_expire
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExtraStorageExpire returns the old "extra_storage_expire" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldExtraStorageExpire(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExtraStorageExpire is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExtraStorageExpire requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExtraStorageExpire: %w", err)
+	}
+	return oldValue.ExtraStorageExpire, nil
+}
+
+// AddExtraStorageExpire adds i to the "extra_storage_expire" field.
+func (m *UserMutation) AddExtraStorageExpire(i int64) {
+	if m.addextra_storage_expire != nil {
+		*m.addextra_storage_expire += i
+	} else {
+		m.addextra_storage_expire = &i
+	}
+}
+
+// AddedExtraStorageExpire returns the value that was added to the "extra_storage_expire" field in this mutation.
+func (m *UserMutation) AddedExtraStorageExpire() (r int64, exists bool) {
+	v := m.addextra_storage_expire
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetExtraStorageExpire resets all changes to the "extra_storage_expire" field.
+func (m *UserMutation) ResetExtraStorageExpire() {
+	m.extra_storage_expire = nil
+	m.addextra_storage_expire = nil
+}
+
 // SetTwoFactorSecret sets the "two_factor_secret" field.
 func (m *UserMutation) SetTwoFactorSecret(s string) {
 	m.two_factor_secret = &s
@@ -21587,6 +21707,118 @@ func (m *UserMutation) OldGroupUsers(ctx context.Context) (v int, err error) {
 // ResetGroupUsers resets all changes to the "group_users" field.
 func (m *UserMutation) ResetGroupUsers() {
 	m.group = nil
+}
+
+// SetGroupExpires sets the "group_expires" field.
+func (m *UserMutation) SetGroupExpires(i int64) {
+	m.group_expires = &i
+	m.addgroup_expires = nil
+}
+
+// GroupExpires returns the value of the "group_expires" field in the mutation.
+func (m *UserMutation) GroupExpires() (r int64, exists bool) {
+	v := m.group_expires
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupExpires returns the old "group_expires" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGroupExpires(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupExpires is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupExpires requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupExpires: %w", err)
+	}
+	return oldValue.GroupExpires, nil
+}
+
+// AddGroupExpires adds i to the "group_expires" field.
+func (m *UserMutation) AddGroupExpires(i int64) {
+	if m.addgroup_expires != nil {
+		*m.addgroup_expires += i
+	} else {
+		m.addgroup_expires = &i
+	}
+}
+
+// AddedGroupExpires returns the value that was added to the "group_expires" field in this mutation.
+func (m *UserMutation) AddedGroupExpires() (r int64, exists bool) {
+	v := m.addgroup_expires
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetGroupExpires resets all changes to the "group_expires" field.
+func (m *UserMutation) ResetGroupExpires() {
+	m.group_expires = nil
+	m.addgroup_expires = nil
+}
+
+// SetPreviousGroup sets the "previous_group" field.
+func (m *UserMutation) SetPreviousGroup(i int) {
+	m.previous_group = &i
+	m.addprevious_group = nil
+}
+
+// PreviousGroup returns the value of the "previous_group" field in the mutation.
+func (m *UserMutation) PreviousGroup() (r int, exists bool) {
+	v := m.previous_group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPreviousGroup returns the old "previous_group" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPreviousGroup(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPreviousGroup is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPreviousGroup requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPreviousGroup: %w", err)
+	}
+	return oldValue.PreviousGroup, nil
+}
+
+// AddPreviousGroup adds i to the "previous_group" field.
+func (m *UserMutation) AddPreviousGroup(i int) {
+	if m.addprevious_group != nil {
+		*m.addprevious_group += i
+	} else {
+		m.addprevious_group = &i
+	}
+}
+
+// AddedPreviousGroup returns the value that was added to the "previous_group" field in this mutation.
+func (m *UserMutation) AddedPreviousGroup() (r int, exists bool) {
+	v := m.addprevious_group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPreviousGroup resets all changes to the "previous_group" field.
+func (m *UserMutation) ResetPreviousGroup() {
+	m.previous_group = nil
+	m.addprevious_group = nil
 }
 
 // SetCredit sets the "credit" field.
@@ -22421,7 +22653,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 17)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -22446,6 +22678,12 @@ func (m *UserMutation) Fields() []string {
 	if m.storage != nil {
 		fields = append(fields, user.FieldStorage)
 	}
+	if m.extra_storage != nil {
+		fields = append(fields, user.FieldExtraStorage)
+	}
+	if m.extra_storage_expire != nil {
+		fields = append(fields, user.FieldExtraStorageExpire)
+	}
 	if m.two_factor_secret != nil {
 		fields = append(fields, user.FieldTwoFactorSecret)
 	}
@@ -22457,6 +22695,12 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.group != nil {
 		fields = append(fields, user.FieldGroupUsers)
+	}
+	if m.group_expires != nil {
+		fields = append(fields, user.FieldGroupExpires)
+	}
+	if m.previous_group != nil {
+		fields = append(fields, user.FieldPreviousGroup)
 	}
 	if m.credit != nil {
 		fields = append(fields, user.FieldCredit)
@@ -22485,6 +22729,10 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case user.FieldStorage:
 		return m.Storage()
+	case user.FieldExtraStorage:
+		return m.ExtraStorage()
+	case user.FieldExtraStorageExpire:
+		return m.ExtraStorageExpire()
 	case user.FieldTwoFactorSecret:
 		return m.TwoFactorSecret()
 	case user.FieldAvatar:
@@ -22493,6 +22741,10 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Settings()
 	case user.FieldGroupUsers:
 		return m.GroupUsers()
+	case user.FieldGroupExpires:
+		return m.GroupExpires()
+	case user.FieldPreviousGroup:
+		return m.PreviousGroup()
 	case user.FieldCredit:
 		return m.Credit()
 	}
@@ -22520,6 +22772,10 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldStatus(ctx)
 	case user.FieldStorage:
 		return m.OldStorage(ctx)
+	case user.FieldExtraStorage:
+		return m.OldExtraStorage(ctx)
+	case user.FieldExtraStorageExpire:
+		return m.OldExtraStorageExpire(ctx)
 	case user.FieldTwoFactorSecret:
 		return m.OldTwoFactorSecret(ctx)
 	case user.FieldAvatar:
@@ -22528,6 +22784,10 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldSettings(ctx)
 	case user.FieldGroupUsers:
 		return m.OldGroupUsers(ctx)
+	case user.FieldGroupExpires:
+		return m.OldGroupExpires(ctx)
+	case user.FieldPreviousGroup:
+		return m.OldPreviousGroup(ctx)
 	case user.FieldCredit:
 		return m.OldCredit(ctx)
 	}
@@ -22595,6 +22855,20 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStorage(v)
 		return nil
+	case user.FieldExtraStorage:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExtraStorage(v)
+		return nil
+	case user.FieldExtraStorageExpire:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExtraStorageExpire(v)
+		return nil
 	case user.FieldTwoFactorSecret:
 		v, ok := value.(string)
 		if !ok {
@@ -22623,6 +22897,20 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetGroupUsers(v)
 		return nil
+	case user.FieldGroupExpires:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupExpires(v)
+		return nil
+	case user.FieldPreviousGroup:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPreviousGroup(v)
+		return nil
 	case user.FieldCredit:
 		v, ok := value.(int)
 		if !ok {
@@ -22641,6 +22929,18 @@ func (m *UserMutation) AddedFields() []string {
 	if m.addstorage != nil {
 		fields = append(fields, user.FieldStorage)
 	}
+	if m.addextra_storage != nil {
+		fields = append(fields, user.FieldExtraStorage)
+	}
+	if m.addextra_storage_expire != nil {
+		fields = append(fields, user.FieldExtraStorageExpire)
+	}
+	if m.addgroup_expires != nil {
+		fields = append(fields, user.FieldGroupExpires)
+	}
+	if m.addprevious_group != nil {
+		fields = append(fields, user.FieldPreviousGroup)
+	}
 	if m.addcredit != nil {
 		fields = append(fields, user.FieldCredit)
 	}
@@ -22654,6 +22954,14 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case user.FieldStorage:
 		return m.AddedStorage()
+	case user.FieldExtraStorage:
+		return m.AddedExtraStorage()
+	case user.FieldExtraStorageExpire:
+		return m.AddedExtraStorageExpire()
+	case user.FieldGroupExpires:
+		return m.AddedGroupExpires()
+	case user.FieldPreviousGroup:
+		return m.AddedPreviousGroup()
 	case user.FieldCredit:
 		return m.AddedCredit()
 	}
@@ -22671,6 +22979,34 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddStorage(v)
+		return nil
+	case user.FieldExtraStorage:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddExtraStorage(v)
+		return nil
+	case user.FieldExtraStorageExpire:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddExtraStorageExpire(v)
+		return nil
+	case user.FieldGroupExpires:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddGroupExpires(v)
+		return nil
+	case user.FieldPreviousGroup:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPreviousGroup(v)
 		return nil
 	case user.FieldCredit:
 		v, ok := value.(int)
@@ -22763,6 +23099,12 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldStorage:
 		m.ResetStorage()
 		return nil
+	case user.FieldExtraStorage:
+		m.ResetExtraStorage()
+		return nil
+	case user.FieldExtraStorageExpire:
+		m.ResetExtraStorageExpire()
+		return nil
 	case user.FieldTwoFactorSecret:
 		m.ResetTwoFactorSecret()
 		return nil
@@ -22774,6 +23116,12 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldGroupUsers:
 		m.ResetGroupUsers()
+		return nil
+	case user.FieldGroupExpires:
+		m.ResetGroupExpires()
+		return nil
+	case user.FieldPreviousGroup:
+		m.ResetPreviousGroup()
 		return nil
 	case user.FieldCredit:
 		m.ResetCredit()

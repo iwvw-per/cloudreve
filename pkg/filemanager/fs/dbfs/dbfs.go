@@ -237,7 +237,11 @@ func (f *DBFS) Capacity(ctx context.Context, u *ent.User) (*fs.Capacity, error) 
 	}
 
 	res.Used = f.user.Storage
-	res.Total = requesterGroup.MaxStorage
+	effectiveExtra := int64(0)
+	if f.user.ExtraStorageExpire == 0 || f.user.ExtraStorageExpire > time.Now().Unix() {
+		effectiveExtra = f.user.ExtraStorage
+	}
+	res.Total = requesterGroup.MaxStorage + effectiveExtra
 	return res, nil
 }
 

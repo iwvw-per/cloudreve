@@ -87,6 +87,13 @@ func SetUserCtx(c *gin.Context, uid int) error {
 		return serializer.NewError(serializer.CodeDBError, "failed to get login user", err)
 	}
 
+	if downgraded, err := userClient.ApplyGroupExpiry(c, loginUser); err == nil && downgraded {
+		fresh, err := userClient.GetLoginUserByID(c, uid)
+		if err == nil {
+			loginUser = fresh
+		}
+	}
+
 	SetUserCtxByUser(c, loginUser)
 	return nil
 }

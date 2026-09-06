@@ -2,6 +2,7 @@ package share
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/cloudreve/Cloudreve/v4/application/dependency"
@@ -13,7 +14,6 @@ import (
 	"github.com/cloudreve/Cloudreve/v4/pkg/filemanager/manager"
 	"github.com/cloudreve/Cloudreve/v4/pkg/hashid"
 	"github.com/cloudreve/Cloudreve/v4/pkg/serializer"
-	"github.com/cloudreve/Cloudreve/v4/service/admin"
 	"github.com/cloudreve/Cloudreve/v4/service/explorer"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
@@ -26,6 +26,9 @@ type (
 	}
 	ShortLinkRedirectParamCtx struct{}
 )
+
+// SettingShareScoreRate 分享被购买后所有者获得的积分分成比例（0-100）。
+const SettingShareScoreRate = "share_score_rate"
 
 func (s *ShortLinkRedirectService) RedirectTo(c *gin.Context) string {
 	shareLongUrl := routes.MasterShareLongUrl(s.ID, s.Password)
@@ -214,6 +217,7 @@ type (
 )
 
 // Buy 校验访问者积分并扣减，记录购买者并写审计日志。
+// 扣积分、记录购买者、给分享所有者分成在同一个事务内原子完成。
 func (s *BuyShareService) Buy(c *gin.Context) (*BuyShareResponse, error) {
 	dep := dependency.FromContext(c)
 	user := inventory.UserFromContext(c)
@@ -251,24 +255,51 @@ func (s *BuyShareService) Buy(c *gin.Context) (*BuyShareResponse, error) {
 		return nil, serializer.NewError(serializer.CodeInsufficientCredit, "Insufficient credits", nil)
 	}
 
-	// 扣减积分
-	newCredit := user.Credit - props.Price
-	if _, err := dep.UserClient().GetClient().User.UpdateOneID(user.ID).SetCredit(newCredit).Save(ctx); err != nil {
+	shareClient := dep.ShareClient()
+	userClient := dep.UserClient()
+	eventClient := dep.EventClient()
+
+	// 计算分享所有者分成（在事务前读取配置，避免 sqlite 单连接下事务内跨连接查询死锁）
+	ownerShare := 0
+	if rateStr, err := dep.SettingClient().Get(c, SettingShareScoreRate); err == nil {
+		if rate, perr := strconv.Atoi(rateStr); perr == nil && rate > 0 {
+			ownerShare = int(float64(props.Price) * float64(rate) / 100.0)
+		}
+	}
+	txShare, tx, ctx, err := inventory.WithTx(ctx, shareClient)
+	if err != nil {
+		return nil, serializer.NewError(serializer.CodeDBError, "Failed to create purchase transaction", err)
+	}
+	txUser, _ := inventory.InheritTx(ctx, userClient)
+	txEvent, _ := inventory.InheritTx(ctx, eventClient)
+
+	// 扣减购买者积分
+	if _, err := txUser.GetClient().User.UpdateOneID(user.ID).SetCredit(user.Credit - props.Price).Save(ctx); err != nil {
+		inventory.Rollback(tx)
 		return nil, serializer.NewError(serializer.CodeDBError, "Failed to deduct credits", err)
+	}
+
+	// 给分享所有者分成（按 share_score_rate 配置，0-100，默认 80）
+	if ownerShare > 0 && share.Edges.User.ID != user.ID {
+		if _, err := txUser.GetClient().User.UpdateOneID(share.Edges.User.ID).SetCredit(share.Edges.User.Credit + ownerShare).Save(ctx); err != nil {
+			inventory.Rollback(tx)
+			return nil, serializer.NewError(serializer.CodeDBError, "Failed to credit share owner", err)
+		}
 	}
 
 	// 记录购买者
 	newProps := *props
 	newProps.PurchasedUsers = lo.Uniq(append(append([]int{}, props.PurchasedUsers...), user.ID))
-	if _, err := dep.ShareClient().Upsert(ctx, &inventory.CreateShareParams{
+	if _, err := txShare.Upsert(ctx, &inventory.CreateShareParams{
 		Existed: share,
 		Props:   &newProps,
 	}); err != nil {
+		inventory.Rollback(tx)
 		return nil, serializer.NewError(serializer.CodeDBError, "Failed to record purchase", err)
 	}
 
-	// 审计
-	admin.RecordEvent(c, &inventory.CreateEventParams{
+	// 审计：购买者扣积分
+	if _, err := txEvent.Create(ctx, &inventory.CreateEventParams{
 		Type:    types.AuditTypePointsChange,
 		UserID:  user.ID,
 		ShareID: share.ID,
@@ -276,7 +307,30 @@ func (s *BuyShareService) Buy(c *gin.Context) (*BuyShareResponse, error) {
 			PointsChange: -props.Price,
 			Reason:       "purchase share access",
 		},
-	})
+	}); err != nil {
+		inventory.Rollback(tx)
+		return nil, serializer.NewError(serializer.CodeDBError, "Failed to write audit", err)
+	}
 
-	return &BuyShareResponse{Purchased: true, Price: props.Price, Credit: newCredit}, nil
+	// 审计：所有者获得收益
+	if ownerShare > 0 {
+		if _, err := txEvent.Create(ctx, &inventory.CreateEventParams{
+			Type:    types.AuditTypePointsChange,
+			UserID:  share.Edges.User.ID,
+			ShareID: share.ID,
+			Content: &types.AuditContent{
+				PointsChange: ownerShare,
+				Reason:       "share purchase revenue",
+			},
+		}); err != nil {
+			inventory.Rollback(tx)
+			return nil, serializer.NewError(serializer.CodeDBError, "Failed to write owner audit", err)
+		}
+	}
+
+	if err := inventory.Commit(tx); err != nil {
+		return nil, serializer.NewError(serializer.CodeDBError, "Failed to commit purchase", err)
+	}
+
+	return &BuyShareResponse{Purchased: true, Price: props.Price, Credit: user.Credit - props.Price}, nil
 }

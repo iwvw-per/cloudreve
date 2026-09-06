@@ -135,14 +135,22 @@ func (c *giftCodeClient) List(ctx context.Context, args *ListGiftCodeArgs) (*Lis
 
 func (c *giftCodeClient) Redeem(ctx context.Context, id, uid int) (*ent.GiftCode, error) {
 	now := time.Now()
-	code, err := c.client.GiftCode.UpdateOneID(id).
+	code, err := c.client.GiftCode.Update().
+		Where(
+			giftcode.ID(id),
+			giftcode.UsedAtIsNil(),
+		).
 		SetUsedBy(uid).
 		SetUsedAt(now).
 		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return code, nil
+	if code == 0 {
+		return nil, ErrGiftCodeUsed
+	}
+
+	return c.client.GiftCode.Query().Where(giftcode.ID(id)).Only(ctx)
 }
 
 func (c *giftCodeClient) Delete(ctx context.Context, ids []int) error {

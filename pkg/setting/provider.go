@@ -353,6 +353,7 @@ func (s *settingProvider) AppSetting(ctx context.Context) *AppSetting {
 	return &AppSetting{
 		Promotion:        s.getBoolean(ctx, "show_app_promotion", false),
 		DesktopPromotion: s.getBoolean(ctx, "show_desktop_app_promotion", false),
+		ShopEnabled:      s.getBoolean(ctx, "shop_nav_enabled", false),
 	}
 }
 

@@ -104,6 +104,9 @@ type (
 		ListUsers(ctx context.Context, args *ListUserParameters) (*ListUserResult, error)
 		// Upsert upserts a user.
 		Upsert(ctx context.Context, u *ent.User, password, twoFa string) (*ent.User, error)
+		// ApplyGroupExpiry lazily downgrades the user's group to previous_group
+		// when group_expires has passed. Returns whether a downgrade happened.
+		ApplyGroupExpiry(ctx context.Context, u *ent.User) (bool, error)
 		// Delete deletes a user.
 		Delete(ctx context.Context, uid int) error
 		// CalculateStorage calculate user's storage from scratch and update user's storage.
@@ -432,6 +435,25 @@ func (c *userClient) GetActiveByID(ctx context.Context, id int) (*ent.User, erro
 	).First(ctx)
 }
 
+// ApplyGroupExpiry 惰性降级：当用户当前用户组已到期且存在回退用户组时，
+// 将用户组回退到 previous_group 并清除到期时间。返回是否发生了降级。
+func (c *userClient) ApplyGroupExpiry(ctx context.Context, u *ent.User) (bool, error) {
+	if u.GroupExpires <= 0 || u.PreviousGroup <= 0 {
+		return false, nil
+	}
+	if u.GroupExpires > time.Now().Unix() {
+		return false, nil
+	}
+	if _, err := c.client.User.UpdateOneID(u.ID).
+		SetGroupID(u.PreviousGroup).
+		SetGroupExpires(0).
+		SetPreviousGroup(0).
+		Save(ctx); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (c *userClient) GetActiveByDavAccount(ctx context.Context, email, pwd string) (*ent.User, error) {
 	ctx = context.WithValue(ctx, LoadUserGroup{}, true)
 	return withUserEagerLoading(
@@ -578,6 +600,13 @@ func (c *userClient) Upsert(ctx context.Context, u *ent.User, password, twoFa st
 		SetAvatar(u.Avatar).
 		SetStatus(u.Status).
 		SetGroupID(u.GroupUsers)
+
+	if u.GroupExpires > 0 {
+		q.SetGroupExpires(u.GroupExpires)
+	}
+	if u.PreviousGroup > 0 {
+		q.SetPreviousGroup(u.PreviousGroup)
+	}
 
 	if password != "" {
 		pwdDigest, err := digestPassword(password)

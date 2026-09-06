@@ -43,6 +43,8 @@ func InitializeDBClient(l logging.Logger,
 		if err := client.Schema.Create(ctx); err != nil {
 			return nil, fmt.Errorf("failed to sync database schema: %w", err)
 		}
+		// 补齐升级版本新增的默认设置键（migrateDefaultSettings 会跳过已存在的键）。
+		migrateDefaultSettings(l, client, ctx, kv)
 	}
 
 	//createMockData(client, ctx)

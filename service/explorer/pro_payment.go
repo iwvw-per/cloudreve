@@ -71,6 +71,10 @@ func (s *CreateOrderService) Create(c *gin.Context) (*ent.Order, error) {
 
 // payWithCredits 使用积分余额即时支付订单：校验余额、创建订单、扣积分并履约。
 func (s *CreateOrderService) payWithCredits(c *gin.Context, dep dependency.Dep, user *ent.User, product *ent.Product) (*ent.Order, error) {
+	if !dep.SettingProvider().AppSetting(c).CreditEnabled {
+		return nil, serializer.NewError(serializer.CodeParamErr, "Credit system is disabled", nil)
+	}
+
 	props := product.Props
 	if props == nil {
 		props = &types.ProductProps{}
@@ -137,5 +141,10 @@ func (s *CreateOrderService) payWithCredits(c *gin.Context, dep dependency.Dep, 
 		return nil, serializer.NewError(serializer.CodeDBError, "Failed to commit payment transaction", err)
 	}
 
-	return order, nil
+	// 返回最新订单状态（事务内 order 对象是创建时快照，状态仍为 unpaid）
+	freshOrder, err := orderClient.GetByOrderNo(c, orderNo)
+	if err != nil {
+		return order, nil
+	}
+	return freshOrder, nil
 }

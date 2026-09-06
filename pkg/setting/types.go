@@ -195,6 +195,7 @@ type AppSetting struct {
 	Promotion        bool
 	DesktopPromotion bool
 	ShopEnabled      bool
+	CreditEnabled    bool
 }
 
 type EmailTemplate struct {

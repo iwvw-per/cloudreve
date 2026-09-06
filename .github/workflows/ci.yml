@@ -54,7 +54,7 @@ jobs:
       - name: Verify embedded assets
         run: ls -la application/statics/ && test -s application/statics/assets.zip
       - name: Build
-        run: go build -o cloudreve .
+        run: CGO_ENABLED=0 go build -o cloudreve .
       - name: Test (excluding legacy broken packages)
         run: go test $(go list ./... | grep -v -E 'pkg/(conf|cache|request)$')
       - uses: actions/upload-artifact@v4

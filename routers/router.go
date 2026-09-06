@@ -896,6 +896,11 @@ func initMasterRouter(dep dependency.Dep) *gin.Engine {
 						controllers.FromJSON[adminsvc.SetSettingService](adminsvc.SetSettingParamCtx{}),
 						controllers.AdminSetSettings,
 					)
+					// Rotate secret key
+					settings.POST("rotateSecretKey",
+						middleware.RequiredScopes(types.ScopeAdminWrite),
+						controllers.AdminRotateSecretKey,
+					)
 				}
 
 				// 用户组管理

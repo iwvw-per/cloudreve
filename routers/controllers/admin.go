@@ -41,6 +41,18 @@ func AdminSetSettings(c *gin.Context) {
 	c.JSON(200, serializer.Response{Data: res})
 }
 
+// AdminRotateSecretKey 轮换站点加密密钥。
+func AdminRotateSecretKey(c *gin.Context) {
+	service := &admin.RotateSecretKeyService{}
+	res, err := service.Rotate(c)
+	if err != nil {
+		c.JSON(200, serializer.Err(c, err))
+		return
+	}
+
+	c.JSON(200, serializer.Response{Data: res})
+}
+
 // AdminListGroups 获取用户组列表
 func AdminListGroups(c *gin.Context) {
 	service := ParametersFromContext[*admin.AdminListService](c, admin.AdminListServiceParamsCtx{})

@@ -212,6 +212,33 @@ type (
 	SettingPostProcessor func(ctx context.Context, settings map[string]string) error
 )
 
+// RotateSecretKeyService 轮换站点加密密钥。
+type (
+	RotateSecretKeyService struct{}
+	RotateSecretKeyParamCtx struct{}
+)
+
+func (s *RotateSecretKeyService) Rotate(c *gin.Context) (map[string]string, error) {
+	dep := dependency.FromContext(c)
+	kv := dep.KV()
+	settingClient := dep.SettingClient()
+
+	newKey := util.RandStringRunesCrypto(256)
+	if err := settingClient.Set(c, map[string]string{"secret_key": newKey}); err != nil {
+		return nil, serializer.NewError(serializer.CodeDBError, "Failed to rotate secret key", err)
+	}
+
+	if err := kv.Delete(setting.KvSettingPrefix, "secret_key"); err != nil {
+		return nil, serializer.NewError(serializer.CodeInternalSetting, "Failed to clear cache", err)
+	}
+
+	if err := secretKeyPostProcessor(c, map[string]string{"secret_key": newKey}); err != nil {
+		return nil, serializer.NewError(serializer.CodeInternalSetting, "Failed to post-process secret key", err)
+	}
+
+	return map[string]string{"rotated": "true"}, nil
+}
+
 var (
 	preprocessors = map[string]SettingPreProcessor{
 		"siteURL":      siteUrlPreProcessor,
